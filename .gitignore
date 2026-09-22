@@ -1,0 +1,74 @@
+# Скомпилированные файлы и артефакты сборки
+[Bb]in/
+[Oo]bj/
+out/
+[Lll]og/
+[Lll]ogs/
+
+# Результаты сборки проектов
+*.dll
+*.exe
+*.pdb
+*.user
+*.userosscache
+*.sln.docstates
+
+# Файлы пакетов NuGet
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+
+# Данные тестирования и покрытия кодом
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# Данные сущностей и Entity Framework Core (локальные SQLite БД и миграции/кеш)
+*.db
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+appsettings.Development.json
+appsettings.Local.json
+
+# Зависимости Node
+client/node_modules/
+node_modules/
+
+# Кэш и сборка Next.js
+client/.next/
+.next/
+client/out/
+out/
+client/build/
+build/
+client/dist/
+dist/
+
+# Логи пакетов
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Локальные переменные окружения (.env)
+client/.env*.local
+client/.env.development.local
+client/.env.test.local
+client/.env.production.local
+.env*.local
+
+# Кэш Vercel и других тулов
+client/.vercel
+.vercel
+client/.turbo
+.turbo
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userprefs

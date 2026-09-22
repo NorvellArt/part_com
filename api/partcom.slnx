@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/partcom.Api/partcom.Api.csproj" />
+    <Project Path="src/partcom.Application/partcom.Application.csproj" />
+    <Project Path="src/partcom.Domain/partcom.Domain.csproj" />
+    <Project Path="src/partcom.Infrastructure/partcom.Infrastructure.csproj" />
+  </Folder>
+</Solution>
