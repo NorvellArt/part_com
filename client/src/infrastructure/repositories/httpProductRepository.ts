@@ -1,6 +1,13 @@
 import { Product } from "@/domain/entities/product";
 import { IProductRepository } from "@/domain/repositories/iProductRepository";
 
+const isServer = typeof window === "undefined";
+
+const internalApiUrl = process.env.INTERNAL_API_URL || "http://localhost:5286";
+const publicApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5286";
+
+export const API_BASE_URL = isServer ? internalApiUrl : publicApiUrl;
+
 export class HttpProductRepository implements IProductRepository {
     private readonly baseUrl: string;
 
@@ -9,7 +16,7 @@ export class HttpProductRepository implements IProductRepository {
     }
 
     async getProducts(): Promise<Product[]> {
-        const response = await fetch(`${this.baseUrl}/api/product`, {
+        const response = await fetch(`${API_BASE_URL}/api/product`, {
             next: { revalidate: 60 },
         });
 
