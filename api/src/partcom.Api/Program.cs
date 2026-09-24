@@ -1,18 +1,14 @@
-using partcom.Domain.Entities;
+using partcom.Api.Endpoints;
+using partcom.Application;
+using partcom.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure();
+
 var app = builder.Build();
 
-app.MapGet("/api/product", () =>
-{
-    var sampleParts = new List<Product>
-    {
-        new() { Id = Guid.NewGuid(), Name = "Масляный фильтр", Price = 850.00m },
-        new() { Id = Guid.NewGuid(), Name = "Тормозные колодки", Price = 3200.00m }
-    };
-
-    return Results.Ok(sampleParts);
-})
-.WithName("GetCarParts");
+app.MapProductEndpoints();
 
 app.Run();
