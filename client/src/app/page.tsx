@@ -2,14 +2,30 @@
 
 import React, { useState } from 'react';
 import { useProducts } from '@/application/useCases/useProducts';
+
 import { Product } from '@/domain/entities/product';
 import { ProductCard } from '@/presentation/components/ProductCard';
 import { ProductDetailModal } from '@/presentation/components/ProductDetailModal';
+import { ExcelImportModal } from '@/presentation/components/ExcelImportModal';
+
+import { Button } from '@/presentation/components/ui/button';
+import { FileSpreadsheet } from 'lucide-react';
 
 export default function CatalogPage() {
-    const { products, isLoading, isError, updateProduct, deleteProduct, isUpdating, isDeleting } = useProducts();
+    const {
+        products,
+        isLoading,
+        isError,
+        updateProduct,
+        deleteProduct,
+        importExcel,
+        isUpdating,
+        isDeleting,
+        isImporting,
+     } = useProducts();
 
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
     if (isLoading) {
         return (
@@ -29,7 +45,16 @@ export default function CatalogPage() {
 
     return (
         <main className="container mx-auto p-6">
-            <h1 className="text-2xl font-bold mb-6">Каталог автозапчастей</h1>
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-bold">Каталог автозапчастей</h1>
+                <Button
+                    onClick={() => setIsImportModalOpen(true)}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2"
+                >
+                    <FileSpreadsheet className="w-4 h-4" />
+                    Импорт из Excel
+                </Button>
+            </div>
 
             {products.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
@@ -55,6 +80,13 @@ export default function CatalogPage() {
                 onDelete={deleteProduct}
                 isUpdating={isUpdating}
                 isDeleting={isDeleting}
+            />
+
+            <ExcelImportModal
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
+                onImport={importExcel}
+                isImporting={isImporting}
             />
         </main>
     );

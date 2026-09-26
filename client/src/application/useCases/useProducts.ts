@@ -28,6 +28,13 @@ export function useProducts() {
         },
     });
 
+    const importExcelMutation = useMutation({
+        mutationFn: (file: File) => productRepository.importFromExcel(file),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: PRODUCTS_QUERY_KEY });
+        },
+    });
+
     return {
         products: productsQuery.data ?? [],
         isLoading: productsQuery.isLoading,
@@ -37,5 +44,7 @@ export function useProducts() {
         isUpdating: updateProductMutation.isPending,
         deleteProduct: deleteProductMutation.mutateAsync,
         isDeleting: deleteProductMutation.isPending,
+        importExcel: importExcelMutation.mutateAsync,
+        isImporting: importExcelMutation.isPending,
     };
 }

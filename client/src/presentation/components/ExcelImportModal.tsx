@@ -1,0 +1,208 @@
+import React, { useState, useRef } from 'react';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+} from '@/presentation/components/ui/dialog';
+import { Button } from '@/presentation/components/ui/button';
+import { UploadCloud, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2, X } from 'lucide-react';
+import { TruncatedFileName } from '@/presentation/components/TruncatedFileName';
+
+interface ExcelImportModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onImport: (file: File) => Promise<{ message: string; count: number }>;
+    isImporting: boolean;
+}
+
+export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({ isOpen, onClose, onImport, isImporting }) => {
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const resetState = () => {
+        setSelectedFile(null);
+        setErrorMessage(null);
+        setSuccessMessage(null);
+    };
+
+    const handleClose = () => {
+        resetState();
+        onClose();
+    };
+
+    const validateAndSetFile = (file: File) => {
+        setErrorMessage(null);
+        setSuccessMessage(null);
+
+        const validExtensions = ['.xlsx', '.xls'];
+        const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+
+        if (!validExtensions.includes(fileExtension)) {
+            setErrorMessage('Неверный формат файла. Выберите файл .xlsx или .xls');
+            setSelectedFile(null);
+            return;
+        }
+
+        setSelectedFile(file);
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) validateAndSetFile(file);
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files?.[0];
+        if (file) validateAndSetFile(file);
+    };
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+    };
+
+    const handleSubmit = async () => {
+        if (!selectedFile) return;
+
+        try {
+            setErrorMessage(null);
+            const result = await onImport(selectedFile);
+            setSuccessMessage(result.message || `Импортировано записей: ${result.count}`);
+            setSelectedFile(null);
+        } catch (err: unknown) {
+            const error = err as Error;
+            setErrorMessage(error.message || 'Произошла ошибка при загрузке файла на сервер');
+        }
+    };
+
+    return (
+        <Dialog
+            open={isOpen}
+            onOpenChange={handleClose}
+        >
+            <DialogContent className="w-full sm:max-w-[480px] overflow-hidden">
+                <DialogHeader>
+                    <DialogTitle className="text-xl flex items-center gap-2">
+                        <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
+                        Импорт автозапчастей из Excel
+                    </DialogTitle>
+                    <DialogDescription>
+                        Загрузите файл Excel (.xlsx, .xls) со списком товаров (Бренд, Артикул, Наименование, Цена,
+                        Количество).
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-4 my-2">
+                    <div
+                        onDrop={handleDrop}
+                        onDragOver={handleDragOver}
+                        onClick={() => fileInputRef.current?.click()}
+                        className={`border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer transition-colors ${
+                            selectedFile
+                                ? 'border-primary/50 bg-accent/30'
+                                : 'border-muted-foreground/25 hover:border-primary/50 hover:bg-accent/20'
+                        }`}
+                    >
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept=".xlsx, .xls"
+                            className="hidden"
+                            onChange={handleFileChange}
+                        />
+
+                        <UploadCloud className="w-10 h-10 text-muted-foreground mb-2 stroke-1" />
+                        <div className="w-full min-w-0 flex justify-center mb-1 px-2">
+                            {selectedFile ? (
+                                <TruncatedFileName name={selectedFile.name} />
+                            ) : (
+                                <p className="text-sm font-medium text-center">
+                                    Перетащите файл сюда или нажмите для выбора
+                                </p>
+                            )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">Поддерживаются .xlsx, .xls до 10MB</p>
+                    </div>
+
+                    {selectedFile && (
+                        <div className="flex items-center justify-between p-3 bg-muted rounded-md text-sm gap-2 w-full min-w-0">
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                                <FileSpreadsheet className="w-4 h-4 text-emerald-600 shrink-0" />
+
+                                <TruncatedFileName
+                                    name={selectedFile.name}
+                                    className="font-medium text-sm flex-1"
+                                />
+
+                                <span className="text-xs text-muted-foreground shrink-0">
+                                    ({(selectedFile.size / 1024).toFixed(1)} KB)
+                                </span>
+                            </div>
+
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-muted-foreground hover:text-foreground shrink-0"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedFile(null);
+                                }}
+                            >
+                                <X className="w-4 h-4" />
+                            </Button>
+                        </div>
+                    )}
+
+                    {isImporting && (
+                        <div className="flex items-center justify-center gap-2 p-3 text-sm text-muted-foreground">
+                            <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                            Обработка файла и импорт данных...
+                        </div>
+                    )}
+
+                    {errorMessage && (
+                        <div className="flex items-start gap-2 p-3 bg-destructive/10 text-destructive text-sm rounded-md">
+                            <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                            <span>{errorMessage}</span>
+                        </div>
+                    )}
+
+                    {successMessage && (
+                        <div className="flex items-center gap-2 p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-sm rounded-md">
+                            <CheckCircle2 className="w-4 h-4 shrink-0" />
+                            <span>{successMessage}</span>
+                        </div>
+                    )}
+                </div>
+
+                <DialogFooter className="flex justify-end gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={handleClose}
+                        disabled={isImporting}
+                    >
+                        Закрыть
+                    </Button>
+                    <Button
+                        onClick={handleSubmit}
+                        disabled={!selectedFile || isImporting}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
+                        {isImporting ? (
+                            <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Загрузка...
+                            </>
+                        ) : (
+                            'Импортировать'
+                        )}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+};
