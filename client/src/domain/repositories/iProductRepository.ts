@@ -1,6 +1,10 @@
-import { Product } from "@/domain/entities/product";
+import { CreateProductInput, Product, UpdateProductInput } from "@/domain/entities/product";
 
 export interface IProductRepository {
-    getProducts(): Promise<Product[]>;
-    getProductById(id: string): Promise<Product | null>;
+    getAll(): Promise<Product[]>;
+    getById(id: string): Promise<Product>;
+    create(input: CreateProductInput): Promise<Product>;
+    update(id: string, input: UpdateProductInput): Promise<void>;
+    delete(id: string): Promise<void>;
+    importFromExcel(file: File): Promise<{ message: string; count: number }>;
 }

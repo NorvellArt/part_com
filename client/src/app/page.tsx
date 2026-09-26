@@ -1,35 +1,61 @@
-import { getProductUseCase } from '@/infrastructure/di/container';
-import { ProductCard } from '@/presentation/components/ProductCard';
+'use client';
+
+import React, { useState } from 'react';
+import { useProducts } from '@/application/useCases/useProducts';
 import { Product } from '@/domain/entities/product';
+import { ProductCard } from '@/presentation/components/ProductCard';
+import { ProductDetailModal } from '@/presentation/components/ProductDetailModal';
 
-export default async function HomePage() {
-    let products: Product[] = [];
-    let error: string | null = null;
+export default function CatalogPage() {
+    const { products, isLoading, isError, updateProduct, deleteProduct, isUpdating, isDeleting } = useProducts();
 
-    try {
-        products = await getProductUseCase.execute();
-    } catch (e) {
-        error = (e as Error).message;
+    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+    if (isLoading) {
+        return (
+            <div className="container mx-auto p-6 text-center text-muted-foreground">
+                Загрузка каталога автозапчастей...
+            </div>
+        );
+    }
+
+    if (isError) {
+        return (
+            <div className="container mx-auto p-6 text-center text-destructive">
+                Ошибка при загрузке данных с сервера.
+            </div>
+        );
     }
 
     return (
-        <main className="min-h-screen p-8 bg-slate-50 text-slate-900">
-            <div className="max-w-5xl mx-auto">
-                <h1 className="text-3xl font-bold mb-6">Каталог деталей PartCom</h1>
+        <main className="container mx-auto p-6">
+            <h1 className="text-2xl font-bold mb-6">Каталог автозапчастей</h1>
 
-                {error && (
-                    <div className="p-4 mb-6 text-red-700 bg-red-100 rounded-lg border border-red-200">{error}</div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {products.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                    Товары не найдены. Импортируйте каталог из Excel.
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {products.map((product) => (
                         <ProductCard
                             key={product.id}
                             product={product}
+                            onClick={(p) => setSelectedProduct(p)}
                         />
                     ))}
                 </div>
-            </div>
+            )}
+
+            <ProductDetailModal
+                product={selectedProduct}
+                isOpen={!!selectedProduct}
+                onClose={() => setSelectedProduct(null)}
+                onUpdate={updateProduct}
+                onDelete={deleteProduct}
+                isUpdating={isUpdating}
+                isDeleting={isDeleting}
+            />
         </main>
     );
 }
