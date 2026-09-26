@@ -26,6 +26,16 @@ public class InMemoryProductRepository : IProductRepository
         return Task.CompletedTask;
     }
 
+    public Task AddRangeAsync(IEnumerable<Product> products, CancellationToken cancellationToken = default)
+    {
+        foreach (var product in products)
+        {
+            _store[product.Id] = product;
+        }
+        return Task.CompletedTask;
+    }
+
+
     public Task UpdateAsync(Product product, CancellationToken cancellationToken = default)
     {
         _store[product.Id] = product;

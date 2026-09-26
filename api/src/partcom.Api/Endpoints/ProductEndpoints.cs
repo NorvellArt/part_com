@@ -39,5 +39,32 @@ public static class ProductEndpoints
             var deleted = await productService.DeleteAsync(id, ct);
             return deleted ? Results.NoContent() : Results.NotFound();
         });
+
+        group.MapPost("/import", async (IFormFile file, IProductService productService, CancellationToken ct) =>
+        {
+            if (file is null || file.Length == 0)
+            {
+                return Results.BadRequest(new { message = "Файл не был загружен или пуст." });
+            }
+
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (extension != ".xlsx" && extension != ".xls")
+            {
+                return Results.BadRequest(new { message = "Неверный формат файла. Поддерживаются только .xlsx и .xls" });
+            }
+
+            using var stream = file.OpenReadStream();
+            var importedCount = await productService.ImportFromExcelAsync(stream, ct);
+
+            return Results.Ok(new
+            {
+                message = $"Успешно импортировано товаров: {importedCount}",
+                count = importedCount
+            });
+        })
+        .DisableAntiforgery()
+        .Accepts<IFormFile>("multipart/form-data")
+        .Produces(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status400BadRequest);
     }
 }

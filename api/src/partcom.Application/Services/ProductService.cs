@@ -5,9 +5,13 @@ using partcom.Application.Interfaces;
 using partcom.Domain.Entities;
 using partcom.Domain.Interfaces;
 
-public class ProductService(IProductRepository productRepository) : IProductService
+public class ProductService(
+    IProductRepository productRepository,
+    IExcelProductParser excelParser
+    ) : IProductService
 {
     private readonly IProductRepository _productRepository = productRepository;
+    private readonly IExcelProductParser _excelParser = excelParser;
 
     public async Task<ProductDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
@@ -18,7 +22,7 @@ public class ProductService(IProductRepository productRepository) : IProductServ
     public async Task<IReadOnlyList<ProductDto>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         var products = await _productRepository.GetAllAsync(cancellationToken);
-        return products.Select(MapToDto).ToList();
+        return [.. products.Select(MapToDto)];
     }
 
     public async Task<ProductDto> CreateAsync(CreateProductDto dto, CancellationToken cancellationToken = default)
@@ -54,6 +58,21 @@ public class ProductService(IProductRepository productRepository) : IProductServ
 
         await _productRepository.DeleteAsync(id, cancellationToken);
         return true;
+    }
+
+    public async Task<int> ImportFromExcelAsync(Stream fileStream, CancellationToken cancellationToken = default)
+    {
+        if (fileStream is null || fileStream.Length == 0)
+            throw new ArgumentException("Файл импорта не может быть пустым.", nameof(fileStream));
+
+        var products = await _excelParser.ParseProductsAsync(fileStream, cancellationToken);
+
+        if (products.Count == 0)
+            return 0;
+
+        await _productRepository.AddRangeAsync(products, cancellationToken);
+
+        return products.Count;
     }
 
     private static ProductDto MapToDto(Product product) =>
