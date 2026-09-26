@@ -5,7 +5,6 @@ import { useProducts } from '@/application/useCases/useProducts';
 
 import { Product } from '@/domain/entities/product';
 import { ProductCard } from '@/presentation/components/ProductCard';
-import { ProductDetailModal } from '@/presentation/components/ProductDetailModal';
 import { ExcelImportModal } from '@/presentation/components/ExcelImportModal';
 
 import { Button } from '@/presentation/components/ui/button';
@@ -66,21 +65,10 @@ export default function CatalogPage() {
                         <ProductCard
                             key={product.id}
                             product={product}
-                            onClick={(p) => setSelectedProduct(p)}
                         />
                     ))}
                 </div>
             )}
-
-            <ProductDetailModal
-                product={selectedProduct}
-                isOpen={!!selectedProduct}
-                onClose={() => setSelectedProduct(null)}
-                onUpdate={updateProduct}
-                onDelete={deleteProduct}
-                isUpdating={isUpdating}
-                isDeleting={isDeleting}
-            />
 
             <ExcelImportModal
                 isOpen={isImportModalOpen}

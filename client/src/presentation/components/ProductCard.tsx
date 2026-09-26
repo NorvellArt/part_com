@@ -1,43 +1,62 @@
 import React from 'react';
+import Link from 'next/link';
 import { Product } from '@/domain/entities/product';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/presentation/components/ui/card';
-import { Badge } from '@/presentation/components/ui/badge';
-import { Package } from 'lucide-react';
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+    CardContent,
+} from '@/presentation/components/ui/card';
+import { ProductImage } from '@/presentation/components/ProductImage';
 
 interface ProductCardProps {
     product: Product;
-    onClick: (product: Product) => void;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     return (
-        <Card
-            className="cursor-pointer hover:shadow-lg transition-all border border-border flex flex-col justify-between overflow-hidden group"
-            onClick={() => onClick(product)}
+        <Link
+            href={`/products/${product.id}`}
+            className="block group"
         >
-            <CardHeader className="p-0">
-                <div className="w-full h-48 bg-muted flex flex-col items-center justify-center text-muted-foreground group-hover:bg-accent/50 transition-colors">
-                    <Package className="w-12 h-12 mb-2 stroke-1" />
-                    <span className="text-xs font-mono">{product.itemNumber}</span>
-                </div>
-            </CardHeader>
+            <Card className="h-full transition-all hover:shadow-md hover:border-primary/50 cursor-pointer">
+                <ProductImage
+                    src={product.imageUrl}
+                    alt={product.name}
+                    brand={product.brand}
+                    className="w-full h-44 shrink-0"
+                />
 
-            <CardContent className="p-4 flex-1">
-                <div className="flex justify-between items-start mb-2">
-                    <Badge
-                        variant="outline"
-                        className="text-xs font-semibold"
-                    >
-                        {product.brand}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">В наличии: {product.quantity} шт.</span>
-                </div>
-                <CardTitle className="text-base font-medium line-clamp-2 leading-tight">{product.name}</CardTitle>
-            </CardContent>
-
-            <CardFooter className="p-4 pt-0 flex justify-between items-center">
-                <span className="text-lg font-bold text-primary">{product.price.toLocaleString('ru-RU')} ₽</span>
-            </CardFooter>
-        </Card>
+                <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                        <span className="font-semibold text-primary">
+                            {product.brand}
+                        </span>
+                        <span className="font-mono">{product.itemNumber}</span>
+                    </div>
+                    <CardTitle className="text-base group-hover:text-primary transition-colors line-clamp-2">
+                        {product.name}
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-2">
+                    <div className="flex items-center justify-between mt-auto">
+                        <span className="text-lg font-bold">
+                            {product.price.toLocaleString('ru-RU')} ₽
+                        </span>
+                        <span
+                            className={`text-xs px-2 py-1 rounded-full ${
+                                product.quantity > 0
+                                    ? 'bg-emerald-500/10 text-emerald-600'
+                                    : 'bg-destructive/10 text-destructive'
+                            }`}
+                        >
+                            {product.quantity > 0
+                                ? `${product.quantity} шт.`
+                                : 'Нет в наличии'}
+                        </span>
+                    </div>
+                </CardContent>
+            </Card>
+        </Link>
     );
 };
