@@ -31,30 +31,34 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
     {
         var dbQuery = _context.Products.AsNoTracking();
 
-        if (!string.IsNullOrWhiteSpace(query))
+        if (string.IsNullOrWhiteSpace(query))
         {
-            var cleanQuery = query.Trim();
-
-            dbQuery = dbQuery
-                .Where(p => EF.Functions.ILike(p.ItemNumber, $"%{cleanQuery}%") ||
-                            EF.Functions.ILike(p.Name, $"%{cleanQuery}%") ||
-                            EF.Functions.TrigramsSimilarity(p.ItemNumber, cleanQuery) > 0.25f ||
-                            EF.Functions.TrigramsSimilarity(p.Name, cleanQuery) > 0.25f)
-                .Select(p => new
-                {
-                    Entity = p,
-                    Score = Math.Max(
-                        EF.Functions.TrigramsSimilarity(p.ItemNumber, cleanQuery),
-                        EF.Functions.TrigramsSimilarity(p.Name, cleanQuery)
-                    )
-                })
-                .OrderByDescending(x => x.Entity.ItemNumber.ToLower() == cleanQuery.ToLower())
-                .ThenByDescending(x => x.Score)
-                .Select(x => x.Entity);
+            var defaultEntities = await dbQuery.Take(limit).ToListAsync(ct);
+            return [.. defaultEntities.Select(MapToDomain)];
         }
 
-        var entities = await dbQuery.Take(limit).ToListAsync(ct);
-        return entities.Select(MapToDomain).ToList();
+        var cleanQuery = query.Trim();
+        var lowerQuery = cleanQuery.ToLower();
+
+        var scoredQuery = dbQuery
+            .Select(p => new
+            {
+                Entity = p,
+                NameScore = EF.Functions.TrigramsWordSimilarity(cleanQuery, p.Name),
+                ArticleScore = EF.Functions.TrigramsWordSimilarity(cleanQuery, p.ItemNumber),
+                IsExactArticle = EF.Functions.ILike(p.ItemNumber, cleanQuery)
+            })
+            .Where(x => x.IsExactArticle ||
+                        EF.Functions.ILike(x.Entity.ItemNumber, $"%{cleanQuery}%") ||
+                        EF.Functions.ILike(x.Entity.Name, $"%{cleanQuery}%") ||
+                        x.NameScore > 0.2f ||
+                        x.ArticleScore > 0.2f)
+            .OrderByDescending(x => x.IsExactArticle)
+            .ThenByDescending(x => Math.Max(x.NameScore, x.ArticleScore))
+            .Select(x => x.Entity);
+
+        var entities = await scoredQuery.Take(limit).ToListAsync(ct);
+        return [.. entities.Select(MapToDomain)];
     }
 
     public async Task AddAsync(Product product, CancellationToken ct = default)
