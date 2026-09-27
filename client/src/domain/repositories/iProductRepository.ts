@@ -6,5 +6,6 @@ export interface IProductRepository {
     create(input: CreateProductInput): Promise<Product>;
     update(id: string, input: UpdateProductInput): Promise<void>;
     delete(id: string): Promise<void>;
+    search(query: string, limit?: number, cancellationToken?: AbortSignal): Promise<Product[]>;
     importFromExcel(file: File): Promise<{ message: string; count: number }>;
 }

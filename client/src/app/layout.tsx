@@ -3,11 +3,14 @@ import '@/app/globals.css';
 import { Geist } from 'next/font/google';
 import { cn } from '@/lib/utils';
 import { Providers } from '@/app/providers';
+import Link from 'next/link';
+import { Suspense } from 'react';
+import { HeaderSearch } from '@/presentation/layout/HeaderSearch';
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
 export const metadata: Metadata = {
-    title: 'PartCom - Каталог деталей',
+    title: 'NAME - Каталог деталей',
     description: 'Каталог автозапчастей',
 };
 
@@ -21,8 +24,36 @@ export default function RootLayout({
             lang="ru"
             className={cn('font-sans', geist.variable)}
         >
-            <body className="antialiased bg-slate-50 text-slate-900">
-                <Providers>{children}</Providers>
+            <body className="antialiased bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+                <Providers>
+                    {/* Общая шапка (Header) */}
+                    <header className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur-md">
+                        <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
+                            <Link
+                                href="/"
+                                className="font-bold text-lg text-slate-900 tracking-tight shrink-0"
+                            >
+                                NAME
+                            </Link>
+
+                            {/* Поисковая строка по центру */}
+                            <div className="flex-1 max-w-md mx-auto flex justify-center">
+                                <Suspense
+                                    fallback={
+                                        <div className="h-9 w-full max-w-sm bg-slate-100 rounded-md animate-pulse" />
+                                    }
+                                >
+                                    <HeaderSearch />
+                                </Suspense>
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* Контент страниц */}
+                    <main className="flex-1 container mx-auto px-4 py-6">
+                        {children}
+                    </main>
+                </Providers>
             </body>
         </html>
     );

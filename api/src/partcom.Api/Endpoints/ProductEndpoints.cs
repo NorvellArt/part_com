@@ -40,6 +40,9 @@ public static class ProductEndpoints
             return deleted ? Results.NoContent() : Results.NotFound();
         });
 
+        group.MapGet("/search", SearchProducts)
+             .Produces<IReadOnlyCollection<ProductDto>>(StatusCodes.Status200OK);
+
         group.MapPost("/import", async (IFormFile file, IProductService productService, CancellationToken ct) =>
         {
             if (file is null || file.Length == 0)
@@ -66,5 +69,15 @@ public static class ProductEndpoints
         .Accepts<IFormFile>("multipart/form-data")
         .Produces(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status400BadRequest);
+    }
+
+    private static async Task<IResult> SearchProducts(
+        string? query,
+        int limit = 50,
+        IProductService productService = null!,
+        CancellationToken ct = default)
+    {
+        var result = await productService.SearchAsync(query, limit, ct);
+        return Results.Ok(result);
     }
 }

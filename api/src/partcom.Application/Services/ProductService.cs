@@ -60,6 +60,24 @@ public class ProductService(
         return true;
     }
 
+    public async Task<IReadOnlyCollection<ProductDto>> SearchAsync(
+        string? query,
+        int limit = 50,
+        CancellationToken cancellationToken = default)
+    {
+        var products = await _productRepository.SearchAsync(query, limit, cancellationToken);
+
+        return [.. products.Select(p => new ProductDto(
+            p.Id,
+            p.Brand,
+            p.ItemNumber,
+            p.Name,
+            p.Price,
+            p.Quantity,
+            p.ImageUrl
+        ))];
+    }
+
     public async Task<int> ImportFromExcelAsync(Stream fileStream, CancellationToken cancellationToken = default)
     {
         if (fileStream is null || fileStream.Length == 0)
@@ -76,5 +94,13 @@ public class ProductService(
     }
 
     private static ProductDto MapToDto(Product product) =>
-        new(product.Id, product.Brand, product.ItemNumber, product.Name, product.Price, product.Quantity);
+        new(
+            product.Id,
+            product.Brand,
+            product.ItemNumber,
+            product.Name,
+            product.Price,
+            product.Quantity,
+            product.ImageUrl
+        );
 }

@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useProducts } from '@/application/useCases/useProducts';
 
-import { Product } from '@/domain/entities/product';
 import { ProductCard } from '@/presentation/components/ProductCard';
 import { ExcelImportModal } from '@/presentation/components/ExcelImportModal';
 
@@ -15,16 +14,11 @@ export default function CatalogPage() {
         products,
         isLoading,
         isError,
-        updateProduct,
-        deleteProduct,
         importExcel,
-        isUpdating,
-        isDeleting,
         isImporting,
-     } = useProducts();
-
-    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+    } = useProducts();
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    
 
     if (isLoading) {
         return (

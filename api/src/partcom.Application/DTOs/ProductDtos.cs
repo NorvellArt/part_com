@@ -6,7 +6,8 @@ public record ProductDto(
     string ItemNumber,
     string Name,
     decimal Price,
-    int Quantity
+    int Quantity,
+    string? ImageUrl
 );
 
 public record CreateProductDto(
@@ -14,7 +15,8 @@ public record CreateProductDto(
     string ItemNumber,
     string Name,
     decimal Price,
-    int Quantity
+    int Quantity,
+    string? ImageUrl
 );
 
 public record UpdateProductDto(
@@ -22,5 +24,6 @@ public record UpdateProductDto(
     string ItemNumber,
     string Name,
     decimal Price,
-    int Quantity
+    int Quantity,
+    string? ImageUrl
 );
