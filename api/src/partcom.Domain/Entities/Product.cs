@@ -8,14 +8,21 @@ public class Product
     public string Name { get; set; } = string.Empty;
     public decimal Price { get; set; }
     public int Quantity { get; set; }
+    public string? ImageUrl { get; private set; }
 
-    public Product(string brand, string itemNumber, string name, decimal price, int quantity)
+    public Product(string brand, string itemNumber, string name, decimal price, int quantity, string? imageUrl = null)
     {
         Id = Guid.NewGuid();
-        Update(brand, itemNumber, name, price, quantity);
+        Update(brand, itemNumber, name, price, quantity, imageUrl);
     }
 
-    public void Update(string brand, string itemNumber, string name, decimal price, int quantity)
+    public Product(Guid id, string brand, string itemNumber, string name, decimal price, int quantity, string? imageUrl = null)
+    {
+        Id = id;
+        Update(brand, itemNumber, name, price, quantity, imageUrl);
+    }
+
+    public void Update(string brand, string itemNumber, string name, decimal price, int quantity, string? imageUrl = null)
     {
         if (string.IsNullOrWhiteSpace(brand))
             throw new ArgumentException("Бренд не может быть пустым.", nameof(brand));
@@ -37,5 +44,6 @@ public class Product
         Name = name;
         Price = price;
         Quantity = quantity;
+        ImageUrl = imageUrl;
     }
 }

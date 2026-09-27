@@ -10,7 +10,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
-        services.AddSingleton<IProductRepository, InMemoryProductRepository>();
+        services.AddScoped<IProductRepository, PostgresProductRepository>();
         services.AddScoped<IExcelProductParser, ExcelProductParser>();
 
         return services;
