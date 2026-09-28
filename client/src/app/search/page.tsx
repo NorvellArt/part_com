@@ -1,6 +1,5 @@
 import { Suspense } from 'react';
 import { SearchResultsContent } from '@/presentation/components/SearchResultsContent';
-import { Card } from '@/presentation/components/ui/card';
 
 interface SearchPageProps {
     searchParams: Promise<{ q?: string }>;

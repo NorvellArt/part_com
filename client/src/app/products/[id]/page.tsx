@@ -139,7 +139,6 @@ export default function ProductDetailPage() {
             </Button>
 
             <div className="bg-card border rounded-xl p-6 shadow-sm space-y-6">
-                {/* Заголовок карточки */}
                 <div className="flex items-start justify-between border-b pb-4">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">
@@ -182,9 +181,7 @@ export default function ProductDetailPage() {
                     </div>
                 )}
 
-                {/* Двухколоночный макет: картинка слева, форма справа */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Блок картинки/заглушки */}
                     <div className="md:col-span-1">
                         <Label className="mb-2 block">Изображение товара</Label>
                         <ProductImage
@@ -195,7 +192,6 @@ export default function ProductDetailPage() {
                         />
                     </div>
 
-                    {/* Форма редактирования */}
                     <form
                         onSubmit={handleSave}
                         className="md:col-span-2 space-y-4"

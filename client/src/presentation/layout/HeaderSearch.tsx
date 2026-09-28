@@ -1,9 +1,14 @@
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
+import { useState, useTransition, useEffect, useRef } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useDebouncedCallback } from 'use-debounce';
-import { Input } from '@/presentation/components/ui/input';
+import {
+    InputGroup,
+    InputGroupInput,
+    InputGroupAddon,
+    InputGroupButton,
+} from '@/presentation/components/ui/input-group';
 import { Search, Loader2, X } from 'lucide-react';
 import { Button } from '@/presentation/components/ui/button';
 
@@ -13,18 +18,23 @@ export function HeaderSearch() {
     const searchParams = useSearchParams();
     const [isPending, startTransition] = useTransition();
 
-    const queryParam = searchParams.get('q') ?? '';
-    const [value, setValue] = useState(queryParam);
+    const queryInUrl = searchParams.get('q') ?? '';
+    const [value, setValue] = useState(queryInUrl);
+
+    const isFocused = useRef(false);
 
     useEffect(() => {
-        setValue(queryParam);
-    }, [queryParam]);
+        if (!isFocused.current) {
+            setValue(queryInUrl);
+        }
+    }, [queryInUrl]);
 
     const handleSearch = useDebouncedCallback((term: string) => {
         const params = new URLSearchParams(searchParams.toString());
+        const trimmed = term.trim();
 
-        if (term.trim()) {
-            params.set('q', term.trim());
+        if (trimmed) {
+            params.set('q', trimmed);
         } else {
             params.delete('q');
         }
@@ -32,11 +42,13 @@ export function HeaderSearch() {
         const targetPath = pathname.startsWith('/search')
             ? pathname
             : '/search';
+        const queryString = params.toString();
+        const targetUrl = queryString
+            ? `${targetPath}?${queryString}`
+            : targetPath;
 
         startTransition(() => {
-            router.push(`${targetPath}?${params.toString()}`, {
-                scroll: false,
-            });
+            router.push(targetUrl, { scroll: false });
         });
     }, 300);
 
@@ -47,40 +59,63 @@ export function HeaderSearch() {
     };
 
     const handleClear = () => {
+        handleSearch.cancel();
         setValue('');
-        handleSearch('');
+
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete('q');
+
+        const targetPath = pathname.startsWith('/search')
+            ? pathname
+            : '/search';
+        const queryString = params.toString();
+        const targetUrl = queryString
+            ? `${targetPath}?${queryString}`
+            : targetPath;
+
+        startTransition(() => {
+            router.push(targetUrl, { scroll: false });
+        });
     };
 
     return (
         <div className="relative w-full max-w-sm">
             <div className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
                 {isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
                 ) : (
                     <Search className="h-4 w-4" />
                 )}
             </div>
 
-            <Input
-                type="search"
-                placeholder="Поиск..."
-                value={value}
-                onChange={onChange}
-                className="pl-9 pr-8"
-            />
-
-            {value && (
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleClear}
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:text-foreground"
-                >
-                    <X className="h-4 w-4" />
-                    <span className="sr-only">Очистить</span>
-                </Button>
-            )}
+            <InputGroup>
+                <InputGroupInput
+                    type="search"
+                    placeholder="Поиск..."
+                    value={value}
+                    onChange={onChange}
+                    onFocus={() => {
+                        isFocused.current = true;
+                    }}
+                    onBlur={() => {
+                        isFocused.current = false;
+                    }}
+                    className="pl-9 pr-8"
+                />
+                {value && (
+                    <InputGroupAddon align="inline-end">
+                        <InputGroupButton
+                            type="button"
+                            variant="ghost"
+                            size="icon-xs"
+                            onClick={handleClear}
+                        >
+                            <X className="h-4 w-4" />
+                            <span className="sr-only">Очистить</span>
+                        </InputGroupButton>
+                    </InputGroupAddon>
+                )}
+            </InputGroup>
         </div>
     );
 }

@@ -21,7 +21,6 @@ export function SearchResultsContent({ query }: SearchResultsContentProps) {
 
     return (
         <div className="space-y-6">
-            {/* Шапка страницы результатов */}
             <div className="flex items-center justify-between border-b pb-4">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">
@@ -50,7 +49,6 @@ export function SearchResultsContent({ query }: SearchResultsContentProps) {
                 </Button>
             </div>
 
-            {/* Ошибка */}
             {isError && (
                 <div className="flex items-center gap-2 p-4 rounded-lg bg-destructive/10 text-destructive text-sm">
                     <AlertCircle className="w-5 h-5 shrink-0" />
@@ -61,7 +59,6 @@ export function SearchResultsContent({ query }: SearchResultsContentProps) {
                 </div>
             )}
 
-            {/* Ничего не найдено */}
             {!isLoading && !isError && products?.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-16 text-center space-y-3 border rounded-xl bg-card">
                     <PackageSearch className="h-12 w-12 text-muted-foreground" />
@@ -82,7 +79,6 @@ export function SearchResultsContent({ query }: SearchResultsContentProps) {
                 </div>
             )}
 
-            {/* Сетка результатов */}
             {!isLoading && !isError && products && products.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {products.map((product) => (
