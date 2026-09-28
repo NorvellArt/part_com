@@ -4,13 +4,15 @@ import { UpdateProductInput } from '@/domain/entities/product';
 
 export const PRODUCTS_QUERY_KEY = ['products'];
 
-export function useProducts() {
+export function useProducts(query: string, limit = 50) {
     const queryClient = useQueryClient();
     const { productRepository } = useRepositories();
 
     const productsQuery = useQuery({
-        queryKey: PRODUCTS_QUERY_KEY,
-        queryFn: () => productRepository.getAll(),
+        queryKey: ['products', 'search', query, limit],
+        queryFn: ({ signal }) => productRepository.search(query, limit, signal),
+        staleTime: 1000 * 60 * 2,
+        enabled: true,
     });
 
     const updateProductMutation = useMutation({

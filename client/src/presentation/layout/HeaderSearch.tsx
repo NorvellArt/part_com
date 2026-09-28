@@ -10,7 +10,6 @@ import {
     InputGroupButton,
 } from '@/presentation/components/ui/input-group';
 import { Search, Loader2, X } from 'lucide-react';
-import { Button } from '@/presentation/components/ui/button';
 
 export function HeaderSearch() {
     const router = useRouter();
@@ -29,6 +28,8 @@ export function HeaderSearch() {
         }
     }, [queryInUrl]);
 
+    const targetPath = '/';
+
     const handleSearch = useDebouncedCallback((term: string) => {
         const params = new URLSearchParams(searchParams.toString());
         const trimmed = term.trim();
@@ -39,9 +40,6 @@ export function HeaderSearch() {
             params.delete('q');
         }
 
-        const targetPath = pathname.startsWith('/search')
-            ? pathname
-            : '/search';
         const queryString = params.toString();
         const targetUrl = queryString
             ? `${targetPath}?${queryString}`
@@ -65,9 +63,6 @@ export function HeaderSearch() {
         const params = new URLSearchParams(searchParams.toString());
         params.delete('q');
 
-        const targetPath = pathname.startsWith('/search')
-            ? pathname
-            : '/search';
         const queryString = params.toString();
         const targetUrl = queryString
             ? `${targetPath}?${queryString}`
