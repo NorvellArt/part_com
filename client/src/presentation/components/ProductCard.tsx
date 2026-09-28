@@ -5,7 +5,7 @@ import {
     Card,
     CardHeader,
     CardTitle,
-    CardContent,
+    CardFooter,
 } from '@/presentation/components/ui/card';
 import { ProductImage } from '@/presentation/components/ProductImage';
 
@@ -19,7 +19,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             href={`/products/${product.id}`}
             className="block group"
         >
-            <Card className="h-full transition-all hover:shadow-md hover:border-primary/50 cursor-pointer">
+            <Card className="h-full flex flex-col transition-all hover:shadow-md hover:border-primary/50 cursor-pointer">
                 <ProductImage
                     src={product.imageUrl}
                     alt={product.name}
@@ -27,7 +27,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                     className="w-full h-44 shrink-0"
                 />
 
-                <CardHeader className="pb-2">
+                <CardHeader className="pb-2 flex-1">
                     <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                         <span className="font-semibold text-primary">
                             {product.brand}
@@ -38,24 +38,22 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                         {product.name}
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="pt-2">
-                    <div className="flex items-center justify-between mt-auto">
-                        <span className="text-lg font-bold">
-                            {product.price.toLocaleString('ru-RU')} ₽
-                        </span>
-                        <span
-                            className={`text-xs px-2 py-1 rounded-full ${
-                                product.quantity > 0
-                                    ? 'bg-emerald-500/10 text-emerald-600'
-                                    : 'bg-destructive/10 text-destructive'
-                            }`}
-                        >
-                            {product.quantity > 0
-                                ? `${product.quantity} шт.`
-                                : 'Нет в наличии'}
-                        </span>
-                    </div>
-                </CardContent>
+                <CardFooter className="mt-auto flex items-center justify-between pt-2">
+                    <span className="text-lg font-bold">
+                        {product.price.toLocaleString('ru-RU')} ₽
+                    </span>
+                    <span
+                        className={`text-xs px-2 py-1 rounded-full ${
+                            product.quantity > 0
+                                ? 'bg-emerald-500/10 text-emerald-600'
+                                : 'bg-destructive/10 text-destructive'
+                        }`}
+                    >
+                        {product.quantity > 0
+                            ? `${product.quantity} шт.`
+                            : 'Нет в наличии'}
+                    </span>
+                </CardFooter>
             </Card>
         </Link>
     );

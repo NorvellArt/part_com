@@ -136,7 +136,6 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({ isOpen, onCl
 
                                 <TruncatedFileName
                                     name={selectedFile.name}
-                                    className="font-medium text-sm flex-1"
                                 />
 
                                 <span className="text-xs text-muted-foreground shrink-0">
