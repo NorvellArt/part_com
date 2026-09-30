@@ -2,6 +2,7 @@ namespace partcom.Application.Services;
 
 using partcom.Application.DTOs;
 using partcom.Application.Interfaces;
+using partcom.Domain.Common;
 using partcom.Domain.Entities;
 using partcom.Domain.Interfaces;
 
@@ -60,22 +61,32 @@ public class ProductService(
         return true;
     }
 
-    public async Task<IReadOnlyCollection<ProductDto>> SearchAsync(
-        string? query,
-        int limit = 50,
-        CancellationToken cancellationToken = default)
+    public async Task<PagedResult<ProductDto>> SearchAsync(
+    string? query,
+    int page = 1,
+    int pageSize = 20,
+    CancellationToken cancellationToken = default)
     {
-        var products = await _productRepository.SearchAsync(query, limit, cancellationToken);
+        var pagedProducts = await _productRepository.SearchAsync(query, page, pageSize, cancellationToken);
 
-        return [.. products.Select(p => new ProductDto(
-            p.Id,
-            p.Brand,
-            p.ItemNumber,
-            p.Name,
-            p.Price,
-            p.Quantity,
-            p.ImageUrl
-        ))];
+        var dtos = pagedProducts.Items
+            .Select(p => new ProductDto(
+                p.Id,
+                p.Brand,
+                p.ItemNumber,
+                p.Name,
+                p.Price,
+                p.Quantity,
+                p.ImageUrl
+            ))
+            .ToList();
+
+        return new PagedResult<ProductDto>(
+            dtos,
+            pagedProducts.TotalCount,
+            pagedProducts.Page,
+            pagedProducts.PageSize
+        );
     }
 
     public async Task<int> ImportFromExcelAsync(Stream fileStream, CancellationToken cancellationToken = default)

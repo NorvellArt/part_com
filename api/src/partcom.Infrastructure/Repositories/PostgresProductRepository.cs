@@ -2,6 +2,7 @@ using partcom.Domain.Entities;
 using partcom.Domain.Interfaces;
 using partcom.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using partcom.Domain.Common;
 
 namespace partcom.Infrastructure.Repositories;
 
@@ -24,17 +25,34 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
             .AsNoTracking()
             .ToListAsync(ct);
 
-        return entities.Select(MapToDomain).ToList();
+        return [.. entities.Select(MapToDomain)];
     }
 
-    public async Task<List<Product>> SearchAsync(string? query, int limit = 50, CancellationToken ct = default)
+    public async Task<PagedResult<Product>> SearchAsync(string? query,
+        int page = 1,
+        int pageSize = 20,
+        CancellationToken ct = default)
     {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
         var dbQuery = _context.Products.AsNoTracking();
 
         if (string.IsNullOrWhiteSpace(query))
         {
-            var defaultEntities = await dbQuery.Take(limit).ToListAsync(ct);
-            return [.. defaultEntities.Select(MapToDomain)];
+            var totalCount = await dbQuery.CountAsync(ct);
+            var defaultEntities = await dbQuery
+                .OrderBy(p => p.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(ct);
+
+            return new PagedResult<Product>(
+                [.. defaultEntities.Select(MapToDomain)],
+                totalCount,
+                page,
+                pageSize
+            );
         }
 
         var cleanQuery = query.Trim();
@@ -52,13 +70,26 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
                         EF.Functions.ILike(x.Entity.ItemNumber, $"%{cleanQuery}%") ||
                         EF.Functions.ILike(x.Entity.Name, $"%{cleanQuery}%") ||
                         x.NameScore > 0.2f ||
-                        x.ArticleScore > 0.2f)
+                        x.ArticleScore > 0.2f);
+
+
+        var searchTotalCount = await scoredQuery.CountAsync(ct);
+
+        var entities = await scoredQuery
             .OrderByDescending(x => x.IsExactArticle)
             .ThenByDescending(x => Math.Max(x.NameScore, x.ArticleScore))
-            .Select(x => x.Entity);
+            .ThenBy(x => x.Entity.Id)
+            .Select(x => x.Entity)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
 
-        var entities = await scoredQuery.Take(limit).ToListAsync(ct);
-        return [.. entities.Select(MapToDomain)];
+        return new PagedResult<Product>(
+            [.. entities.Select(MapToDomain)],
+            searchTotalCount,
+            page,
+            pageSize
+        );
     }
 
     public async Task AddAsync(Product product, CancellationToken ct = default)

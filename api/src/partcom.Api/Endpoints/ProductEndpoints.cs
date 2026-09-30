@@ -73,11 +73,12 @@ public static class ProductEndpoints
 
     private static async Task<IResult> SearchProducts(
         string? query,
-        int limit = 50,
+        int page = 1,
+        int pageSize = 20,
         IProductService productService = null!,
         CancellationToken ct = default)
     {
-        var result = await productService.SearchAsync(query, limit, ct);
+        var result = await productService.SearchAsync(query, page, pageSize, ct);
         return Results.Ok(result);
     }
 }
