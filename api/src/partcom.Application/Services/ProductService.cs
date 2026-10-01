@@ -20,12 +20,6 @@ public class ProductService(
         return product is null ? null : MapToDto(product);
     }
 
-    public async Task<IReadOnlyList<ProductDto>> GetAllAsync(CancellationToken cancellationToken = default)
-    {
-        var products = await _productRepository.GetAllAsync(cancellationToken);
-        return [.. products.Select(MapToDto)];
-    }
-
     public async Task<ProductDto> CreateAsync(CreateProductDto dto, CancellationToken cancellationToken = default)
     {
         var product = new Product(

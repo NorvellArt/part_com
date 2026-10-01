@@ -1,0 +1,1 @@
+export { ProductEditor } from '@/widgets/product-editor/ProductEditor';

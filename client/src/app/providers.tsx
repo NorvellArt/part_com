@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { RepositoryProvider } from '@/infrastructure/di/repositoryContext';
 
 export function Providers({ children }: { children: React.ReactNode }) {
     const [queryClient] = useState(
@@ -19,7 +18,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
     return (
         <QueryClientProvider client={queryClient}>
-            <RepositoryProvider>{children}</RepositoryProvider>
+            {children}
         </QueryClientProvider>
     );
 }

@@ -1,0 +1,1 @@
+export { useUpdateProduct, type UpdateProductDto } from '@/features/edit-product/api/updateProductApi';

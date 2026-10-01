@@ -10,12 +10,6 @@ public static class ProductEndpoints
         var group = app.MapGroup("/api/products")
                        .WithTags("Products");
 
-        group.MapGet("/", async (IProductService productService, CancellationToken ct) =>
-        {
-            var products = await productService.GetAllAsync(ct);
-            return Results.Ok(products);
-        });
-
         group.MapGet("/{id:guid}", async (Guid id, IProductService productService, CancellationToken ct) =>
         {
             var product = await productService.GetByIdAsync(id, ct);

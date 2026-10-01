@@ -1,0 +1,1 @@
+export { HeaderSearch } from "@/features/search-products/components/HeaderSearch";

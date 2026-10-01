@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { CatalogContent } from '@/presentation/components/CatalogContent';
+import { CatalogContent } from '@/widgets/product-catalog/CatalogContent';
 
 interface PageProps {
     searchParams: Promise<{ q?: string }>;

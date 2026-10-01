@@ -19,15 +19,6 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
         return entity is null ? null : MapToDomain(entity);
     }
 
-    public async Task<IReadOnlyList<Product>> GetAllAsync(CancellationToken ct = default)
-    {
-        var entities = await _context.Products
-            .AsNoTracking()
-            .ToListAsync(ct);
-
-        return [.. entities.Select(MapToDomain)];
-    }
-
     public async Task<PagedResult<Product>> SearchAsync(string? query,
         int page = 1,
         int pageSize = 20,
