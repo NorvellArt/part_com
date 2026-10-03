@@ -1,0 +1,1 @@
+export { getQueryClient } from '@/shared/lib/react-query/queryClient'
