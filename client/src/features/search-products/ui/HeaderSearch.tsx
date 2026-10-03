@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useTransition, useEffect, useRef } from 'react';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useDebouncedCallback } from 'use-debounce';
 import {
     InputGroup,
     InputGroupInput,
     InputGroupAddon,
     InputGroupButton,
-} from '@/shared';
+} from '@/shared/components';
 import { Search, Loader2, X } from 'lucide-react';
 
 export function HeaderSearch() {

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/shared';
+import { Button } from '@/shared/components';
 import { Trash2, Loader2 } from 'lucide-react';
 import { useDeleteProduct } from '@/features/delete-product';
 

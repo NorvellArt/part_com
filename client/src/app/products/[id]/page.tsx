@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { ProductEditor } from '@/widgets/product-editor';
-import { Button } from '@/shared';
+import { Button } from '@/shared/components';
 import { ArrowLeft } from 'lucide-react';
 
 export default function ProductDetailPage() {

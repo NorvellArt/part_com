@@ -1,1 +1,1 @@
-export { HeaderSearch } from "@/features/search-products/components/HeaderSearch";
+export { HeaderSearch } from "@/features/search-products/ui/HeaderSearch";

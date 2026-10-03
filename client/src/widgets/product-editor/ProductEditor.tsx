@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useProduct, ProductImage } from '@/entities/product';
 import { useUpdateProduct } from '@/features/edit-product';
 import { DeleteProductButton } from '@/features/delete-product';
-import { Button, Input, Label } from '@/shared';
+import { Button, Input, Label } from '@/shared/components';
 import { Save, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 
 interface ProductEditorProps {

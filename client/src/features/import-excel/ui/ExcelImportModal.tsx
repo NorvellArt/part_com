@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useRef } from 'react';
 import {
     Dialog,
@@ -8,7 +10,7 @@ import {
     DialogFooter,
     Button,
     TruncatedFileName,
-} from '@/shared';
+} from '@/shared/components';
 import {
     UploadCloud,
     FileSpreadsheet,
