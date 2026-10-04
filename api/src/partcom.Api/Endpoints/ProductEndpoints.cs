@@ -51,12 +51,12 @@ public static class ProductEndpoints
             }
 
             using var stream = file.OpenReadStream();
-            var importedCount = await productService.ImportFromExcelAsync(stream, ct);
+            var (importedCount, updatedCount) = await productService.ImportFromExcelAsync(stream, ct);
 
             return Results.Ok(new
             {
-                message = $"Успешно импортировано товаров: {importedCount}",
-                count = importedCount
+                importedCount,
+                updatedCount
             });
         })
         .DisableAntiforgery()

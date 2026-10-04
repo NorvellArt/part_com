@@ -2,11 +2,16 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchApi } from '@/shared';
 import { productKeys } from '@/entities/product';
 
-export async function importExcelApi(file: File): Promise<{ message: string; count: number }> {
+interface ImportExcelResponse {
+    importedCount: number;
+    updatedCount: number;
+}
+
+export async function importExcelApi(file: File): Promise<ImportExcelResponse> {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetchApi<{ message: string; count: number }>('/api/products/import', {
+    const response = await fetchApi<ImportExcelResponse>('/api/products/import', {
         method: 'POST',
         body: formData,
     });

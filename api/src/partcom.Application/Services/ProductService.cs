@@ -83,19 +83,64 @@ public class ProductService(
         );
     }
 
-    public async Task<int> ImportFromExcelAsync(Stream fileStream, CancellationToken cancellationToken = default)
+    public async Task<(int InsertedCount, int UpdatedCount)> ImportFromExcelAsync(
+        Stream fileStream,
+        CancellationToken cancellationToken = default
+        )
     {
         if (fileStream is null || fileStream.Length == 0)
             throw new ArgumentException("Файл импорта не может быть пустым.", nameof(fileStream));
 
-        var products = await _excelParser.ParseProductsAsync(fileStream, cancellationToken);
+        var parsedProducts = await _excelParser.ParseProductsAsync(fileStream, cancellationToken);
 
-        if (products.Count == 0)
-            return 0;
+        var excelItemNumbers = parsedProducts
+            .Select(p => p.ItemNumber)
+            .Where(x => !string.IsNullOrEmpty(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
 
-        await _productRepository.AddRangeAsync(products, cancellationToken);
+        var existingProducts = await _productRepository.GetByItemNumbersAsync(excelItemNumbers, cancellationToken);
 
-        return products.Count;
+        var productsToAdd = new List<Product>();
+        var productsToUpdate = new Dictionary<string, Product>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var parsedProduct in parsedProducts)
+        {
+            if (string.IsNullOrWhiteSpace(parsedProduct.ItemNumber))
+                continue;
+
+            if (existingProducts.TryGetValue(parsedProduct.ItemNumber, out var existingProduct))
+            {
+                existingProduct.Update(
+                    parsedProduct.Brand,
+                    parsedProduct.ItemNumber,
+                    parsedProduct.Name,
+                    parsedProduct.Price,
+                    parsedProduct.Quantity
+                );
+
+                productsToUpdate[existingProduct.ItemNumber] = existingProduct;
+            }
+            else
+            {
+                productsToAdd.Add(parsedProduct);
+                existingProducts[parsedProduct.ItemNumber] = parsedProduct;
+            }
+        }
+
+        if (productsToAdd.Count > 0)
+        {
+            await _productRepository.AddRangeAsync(productsToAdd, cancellationToken);
+        }
+
+        if (productsToUpdate.Count > 0)
+        {
+            await _productRepository.UpdateRangeAsync(productsToUpdate.Values, cancellationToken);
+        }
+
+        await _productRepository.SaveChangesAsync(cancellationToken);
+
+        return (productsToAdd.Count, productsToUpdate.Count);
     }
 
     private static ProductDto MapToDto(Product product) =>

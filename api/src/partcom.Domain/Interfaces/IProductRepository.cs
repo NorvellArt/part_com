@@ -6,6 +6,9 @@ using partcom.Domain.Entities;
 public interface IProductRepository
 {
     Task<Product?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Dictionary<string, Product>> GetByItemNumbersAsync(
+        IEnumerable<string> itemNumbers,
+        CancellationToken cancellationToken = default);
     Task<PagedResult<Product>> SearchAsync(
         string? query,
         int page = 1,
@@ -15,5 +18,7 @@ public interface IProductRepository
     Task AddAsync(Product product, CancellationToken cancellationToken = default);
     Task AddRangeAsync(IEnumerable<Product> products, CancellationToken cancellationToken = default);
     Task UpdateAsync(Product product, CancellationToken cancellationToken = default);
+    Task UpdateRangeAsync(IEnumerable<Product> products, CancellationToken cancellationToken = default);
     Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+    Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

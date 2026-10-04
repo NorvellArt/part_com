@@ -15,5 +15,5 @@ public interface IProductService
     int pageSize = 20,
     CancellationToken cancellationToken = default);
 
-    Task<int> ImportFromExcelAsync(Stream fileStream, CancellationToken cancellationToken = default);
+    Task<(int InsertedCount, int UpdatedCount)> ImportFromExcelAsync(Stream fileStream, CancellationToken cancellationToken = default);
 }

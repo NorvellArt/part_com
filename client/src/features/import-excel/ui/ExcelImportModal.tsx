@@ -92,9 +92,10 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
         try {
             setErrorMessage(null);
             const result = await importExcelAsync(selectedFile);
-            setSuccessMessage(
-                result.message || `Импортировано записей: ${result.count}`,
-            );
+            const importedString = result.importedCount ? `Добавлено записей: ${result.importedCount} ` : '';
+            const updatedString = result.updatedCount ? `Обновлено записей: ${result.updatedCount}` : '';
+            
+            setSuccessMessage(`${importedString}${updatedString}`);
             setSelectedFile(null);
         } catch (err: unknown) {
             const error = err as Error;

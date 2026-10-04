@@ -19,6 +19,33 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
         return entity is null ? null : MapToDomain(entity);
     }
 
+    public async Task<Dictionary<string, Product>> GetByItemNumbersAsync(
+        IEnumerable<string> itemNumbers,
+        CancellationToken cancellationToken = default)
+    {
+        var distinctNumbers = itemNumbers
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var result = new Dictionary<string, Product>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var chunk in distinctNumbers.Chunk(1000))
+        {
+            var entities = await _context.Products
+                .Where(p => chunk.Contains(p.ItemNumber))
+                .ToListAsync(cancellationToken);
+
+            foreach (var entity in entities)
+            {
+                var domainProduct = MapToDomain(entity);
+                result[entity.ItemNumber] = domainProduct;
+            }
+        }
+
+        return result;
+    }
+
     public async Task<PagedResult<Product>> SearchAsync(string? query,
         int page = 1,
         int pageSize = 20,
@@ -94,7 +121,6 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
     {
         var entities = products.Select(MapToEntity).ToList();
         await _context.Products.AddRangeAsync(entities, ct);
-        await _context.SaveChangesAsync(ct);
     }
 
     public async Task UpdateAsync(Product product, CancellationToken ct = default)
@@ -112,6 +138,27 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
         await _context.SaveChangesAsync(ct);
     }
 
+    public async Task UpdateRangeAsync(IEnumerable<Product> products, CancellationToken cancellationToken = default)
+    {
+        var itemNumbers = products.Select(p => p.ItemNumber).ToList();
+
+        var entities = await _context.Products
+            .Where(p => itemNumbers.Contains(p.ItemNumber))
+            .ToDictionaryAsync(p => p.ItemNumber, StringComparer.OrdinalIgnoreCase, cancellationToken);
+
+        foreach (var product in products)
+        {
+            if (entities.TryGetValue(product.ItemNumber, out var entity))
+            {
+                entity.Brand = product.Brand;
+                entity.Name = product.Name;
+                entity.Price = product.Price;
+                entity.Quantity = product.Quantity;
+                entity.ImageUrl = product.ImageUrl;
+            }
+        }
+    }
+
     public async Task DeleteAsync(Guid id, CancellationToken ct = default)
     {
         var entity = await _context.Products.FirstOrDefaultAsync(p => p.Id == id, ct);
@@ -120,6 +167,11 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
             _context.Products.Remove(entity);
             await _context.SaveChangesAsync(ct);
         }
+    }
+
+    public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
     private static Product MapToDomain(ProductEntity entity)
