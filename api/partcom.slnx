@@ -4,5 +4,6 @@
     <Project Path="src/partcom.Application/partcom.Application.csproj" />
     <Project Path="src/partcom.Domain/partcom.Domain.csproj" />
     <Project Path="src/partcom.Infrastructure/partcom.Infrastructure.csproj" />
+    <Project Path="src/partcom.UnitTests/partcom.UnitTests.csproj" />
   </Folder>
 </Solution>
