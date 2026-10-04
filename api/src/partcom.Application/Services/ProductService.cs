@@ -31,6 +31,7 @@ public class ProductService(
         );
 
         await _productRepository.AddAsync(product, cancellationToken);
+        await _productRepository.SaveChangesAsync();
         return MapToDto(product);
     }
 
@@ -42,6 +43,7 @@ public class ProductService(
 
         product.Update(dto.Brand, dto.ItemNumber, dto.Name, dto.Price, dto.Quantity);
         await _productRepository.UpdateAsync(product, cancellationToken);
+        await _productRepository.SaveChangesAsync();
         return true;
     }
 
@@ -61,6 +63,9 @@ public class ProductService(
     int pageSize = 20,
     CancellationToken cancellationToken = default)
     {
+        page = page < 1 ? 1 : page;
+        pageSize = pageSize < 1 ? 20 : (pageSize > 100 ? 100 : pageSize);
+        
         var pagedProducts = await _productRepository.SearchAsync(query, page, pageSize, cancellationToken);
 
         var dtos = pagedProducts.Items

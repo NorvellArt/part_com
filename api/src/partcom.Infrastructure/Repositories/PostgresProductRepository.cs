@@ -114,7 +114,6 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
     {
         var entity = MapToEntity(product);
         await _context.Products.AddAsync(entity, ct);
-        await _context.SaveChangesAsync(ct);
     }
 
     public async Task AddRangeAsync(IEnumerable<Product> products, CancellationToken ct = default)
@@ -134,8 +133,6 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
         entity.Price = product.Price;
         entity.Quantity = product.Quantity;
         entity.ImageUrl = "";
-
-        await _context.SaveChangesAsync(ct);
     }
 
     public async Task UpdateRangeAsync(IEnumerable<Product> products, CancellationToken cancellationToken = default)
