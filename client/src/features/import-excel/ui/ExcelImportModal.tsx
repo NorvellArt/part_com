@@ -33,8 +33,6 @@ export const ExcelImportModal: React.FC<ExcelImportModalProps> = ({
     const {
         mutateAsync: importExcelAsync,
         isPending,
-        error,
-        isSuccess,
     } = useImportExcel();
 
     const [selectedFile, setSelectedFile] = useState<File | null>(null);

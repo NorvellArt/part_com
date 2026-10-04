@@ -24,6 +24,8 @@ export function Pagination({ currentPage, totalPages }: PaginationProps) {
     if (totalPages <= 1) return null;
 
     const createPageUrl = (pageNumber: number) => {
+        if (pageNumber < 1 || pageNumber > totalPages) return '#';
+
         const params = new URLSearchParams(searchParams.toString());
         params.set('page', pageNumber.toString());
         return `${pathname}?${params.toString()}`;
@@ -37,7 +39,7 @@ export function Pagination({ currentPage, totalPages }: PaginationProps) {
         if (page < 1 || page > totalPages || page === currentPage) return;
         router.push(createPageUrl(page), { scroll: true });
     };
-    
+
     const renderPageNumbers = () => {
         const pages: (number | 'ellipsis')[] = [];
 
@@ -79,17 +81,29 @@ export function Pagination({ currentPage, totalPages }: PaginationProps) {
         });
     };
 
+    const isPrevDisabled = currentPage <= 1;
+    const isNextDisabled = currentPage >= totalPages;
+
     return (
         <ShadcnPagination className="my-6">
             <PaginationContent>
                 <PaginationItem>
                     <PaginationPrevious
-                        text='Предыдущая'
-                        href={createPageUrl(currentPage - 1)}
-                        onClick={(e) => handlePageChange(e, currentPage - 1)}
-                        aria-disabled={currentPage <= 1}
+                        text="Предыдущая"
+                        href={
+                            isPrevDisabled
+                                ? '#'
+                                : createPageUrl(currentPage - 1)
+                        }
+                        onClick={(e) =>
+                            isPrevDisabled
+                                ? e.preventDefault()
+                                : handlePageChange(e, currentPage - 1)
+                        }
+                        aria-disabled={isPrevDisabled}
+                        tabIndex={isPrevDisabled ? -1 : undefined}
                         className={
-                            currentPage <= 1
+                            isPrevDisabled
                                 ? 'pointer-events-none opacity-50'
                                 : ''
                         }
@@ -100,12 +114,21 @@ export function Pagination({ currentPage, totalPages }: PaginationProps) {
 
                 <PaginationItem>
                     <PaginationNext
-                        text='Следующая'
-                        href={createPageUrl(currentPage + 1)}
-                        onClick={(e) => handlePageChange(e, currentPage + 1)}
-                        aria-disabled={currentPage >= totalPages}
+                        text="Следующая"
+                        href={
+                            isNextDisabled
+                                ? '#'
+                                : createPageUrl(currentPage + 1)
+                        }
+                        onClick={(e) =>
+                            isNextDisabled
+                                ? e.preventDefault()
+                                : handlePageChange(e, currentPage + 1)
+                        }
+                        aria-disabled={isNextDisabled}
+                        tabIndex={isNextDisabled ? -1 : undefined}
                         className={
-                            currentPage >= totalPages
+                            isNextDisabled
                                 ? 'pointer-events-none opacity-50'
                                 : ''
                         }
