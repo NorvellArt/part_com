@@ -1,0 +1,39 @@
+import { DefaultSession } from 'next-auth';
+
+export interface UserAuthDto {
+    userId: string;
+    email: string;
+    accessToken: string;
+    refreshToken: string;
+    refreshTokenExpiresAtUtc: string;
+}
+
+export interface LoginCredentialsDto {
+    email: string;
+    password: string;
+}
+
+declare module 'next-auth' {
+    interface User extends UserAuthDto { }
+
+    interface Session {
+        user: {
+            id: string;
+            email: string;
+        } & DefaultSession['user'];
+        accessToken: string;
+        refreshToken: string;
+        error?: 'RefreshAccessTokenError';
+    }
+}
+
+declare module 'next-auth/jwt' {
+    interface JWT {
+        userId: string;
+        email: string;
+        accessToken: string;
+        refreshToken: string;
+        refreshTokenExpiresAtUtc: number;
+        error?: 'RefreshAccessTokenError';
+    }
+}
