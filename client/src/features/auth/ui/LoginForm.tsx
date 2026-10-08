@@ -2,6 +2,21 @@
 
 import { useState } from 'react';
 import { useLogin } from '@/features/auth/model/useLogin';
+import {
+    Button,
+    Input,
+    Label,
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    Alert,
+    AlertDescription,
+    CardFooter,
+    buttonVariants,
+} from '@/shared/components';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 
 export function LoginForm() {
     const [email, setEmail] = useState('');
@@ -14,45 +29,81 @@ export function LoginForm() {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4 max-w-sm w-full p-6 border rounded-lg shadow-sm bg-card">
-            <h1 className="text-2xl font-bold text-center">Вход в систему</h1>
-
-            {error && (
-                <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md border border-red-200">
-                    {error.message}
+        <Card className="w-full max-w-l">
+            <CardHeader className="space-y-1">
+                <div className="flex items-center justify-between mb-2">
+                    <Link
+                        href="/"
+                        className={buttonVariants({
+                            variant: 'ghost',
+                            size: 'sm',
+                            className:
+                                'gap-1 text-xs text-muted-foreground hover:text-foreground px-2 py-1 h-auto',
+                        })}
+                    >
+                        <ArrowLeft className="w-3.5 h-3.5" />
+                        На главную
+                    </Link>
                 </div>
-            )}
 
-            <div className="space-y-1">
-                <label className="text-sm font-medium">Email</label>
-                <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md"
-                    placeholder="user@example.com"
-                />
-            </div>
+                <CardTitle className="text-2xl font-bold text-center">
+                    Вход в систему
+                </CardTitle>
+            </CardHeader>
 
-            <div className="space-y-1">
-                <label className="text-sm font-medium">Пароль</label>
-                <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md"
-                />
-            </div>
+            <CardContent>
+                <form
+                    onSubmit={handleSubmit}
+                    className="space-y-4"
+                >
+                    {error && (
+                        <Alert variant="destructive">
+                            <AlertDescription>{error.message}</AlertDescription>
+                        </Alert>
+                    )}
 
-            <button
-                type="submit"
-                disabled={isPending}
-                className="w-full py-2 bg-primary text-primary-foreground rounded-md font-medium hover:opacity-90 disabled:opacity-50"
-            >
-                {isPending ? 'Выполняется вход...' : 'Войти'}
-            </button>
-        </form>
+                    <div className="space-y-2">
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                            id="email"
+                            type="email"
+                            required
+                            placeholder="user@example.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="password">Пароль</Label>
+                        <Input
+                            id="password"
+                            type="password"
+                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
+                    </div>
+
+                    <Button
+                        type="submit"
+                        className="w-full"
+                        disabled={isPending}
+                    >
+                        {isPending ? 'Выполняется вход...' : 'Войти'}
+                    </Button>
+                </form>
+            </CardContent>
+
+            <CardFooter className="justify-center border-t pt-4 text-sm text-muted-foreground">
+                Нет аккаунта?{' '}
+                <Link
+                    href="/register"
+                    className="ml-1 text-primary underline-offset-4 hover:underline font-medium"
+                >
+                    Зарегистрироваться
+                </Link>
+            </CardFooter>
+        </Card>
     );
 }

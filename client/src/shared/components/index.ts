@@ -7,5 +7,6 @@ export * from '@/shared/components/ui/input-group';
 export * from '@/shared/components/ui/label';
 export * from '@/shared/components/ui/textarea';
 export * from '@/shared/components/ui/pagination'
+export * from '@/shared/components/ui/alert'
 
 export { TruncatedFileName } from '@/shared/components/TruncatedFileName'

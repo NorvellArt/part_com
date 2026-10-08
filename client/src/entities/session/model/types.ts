@@ -13,6 +13,11 @@ export interface LoginCredentialsDto {
     password: string;
 }
 
+export interface RegisterCredentialsDto {
+    email: string;
+    password: string;
+}
+
 declare module 'next-auth' {
     interface User extends UserAuthDto { }
 
