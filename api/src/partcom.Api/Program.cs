@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using partcom.Api.Endpoints;
 using partcom.Application;
 using partcom.Infrastructure;
+using partcom.Infrastructure.Identity;
 using partcom.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,6 +28,9 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await dbContext.Database.MigrateAsync();
+
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+    await IdentityDataSeeder.SeedRolesAsync(roleManager);
 }
 
 app.UseCors("AllowFrontend");
