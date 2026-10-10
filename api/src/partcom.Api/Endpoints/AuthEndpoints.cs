@@ -56,6 +56,7 @@ public static class AuthEndpoints
                 userId = result.Value.UserId,
                 email = result.Value.Email,
                 accessToken = result.Value.AccessToken,
+                roles = result.Value.Roles
             });
         })
         .WithName("Login")

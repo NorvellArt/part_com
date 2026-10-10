@@ -1,9 +1,11 @@
 import { DefaultSession } from 'next-auth';
 
+type RoleType = 'ADMIN' | 'USER'; 
 export interface UserAuthDto {
     userId: string;
     email: string;
     accessToken: string;
+    roles: RoleType[];
 }
 
 export interface LoginCredentialsDto {
@@ -23,6 +25,7 @@ declare module 'next-auth' {
         user: {
             id: string;
             email: string;
+            roles: RoleType[];
         } & DefaultSession['user'];
         accessToken: string;
         refreshToken: string;
@@ -37,6 +40,7 @@ declare module 'next-auth/jwt' {
         accessToken: string;
         refreshToken: string;
         refreshTokenExpiresAtUtc: number;
+        roles: RoleType[];
         error?: 'RefreshAccessTokenError';
     }
 }

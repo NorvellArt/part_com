@@ -4,7 +4,7 @@ const API_URL = process.env.INTERNAL_API_URL || 'http://localhost:5286';
 
 export const sessionApi = {
     async login(credentials: LoginCredentialsDto): Promise<UserAuthDto> {
-        const res = await fetch(`${API_URL}/auth/login`, {
+        const res = await fetch(`${API_URL}/api/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(credentials),

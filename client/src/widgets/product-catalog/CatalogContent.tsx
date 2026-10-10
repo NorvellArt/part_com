@@ -1,4 +1,6 @@
+import { getServerSession } from 'next-auth';
 import { ProductCard, productApi } from '@/entities/product';
+import { authOptions } from '@/entities/session';
 import { ExcelImportButton } from '@/features/import-excel';
 import { Pagination } from '@/features/pagination';
 
@@ -10,6 +12,10 @@ interface CatalogContentProps {
 const PAGE_SIZE = 20;
 
 export async function CatalogContent({ query, page }: CatalogContentProps) {
+    const session = await getServerSession(authOptions);
+
+    const isAdmin = session?.user?.roles?.includes('ADMIN');
+
     const data = await productApi.search({ query, page, pageSize: PAGE_SIZE });
     const totalPages = data.totalPages;
 
@@ -21,7 +27,7 @@ export async function CatalogContent({ query, page }: CatalogContentProps) {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold">{title}</h1>
-                <ExcelImportButton />
+                {isAdmin && <ExcelImportButton />}
             </div>
 
             {data.totalCount === 0 ? (

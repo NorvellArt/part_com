@@ -161,7 +161,8 @@ public class IdentityService(
             Email: domainUser.Email,
             AccessToken: accessToken,
             RefreshToken: refreshTokenValue,
-            RefreshTokenExpiresAtUtc: refreshTokenExpiresAt
+            RefreshTokenExpiresAtUtc: refreshTokenExpiresAt,
+            Roles: roles
         ));
     }
 

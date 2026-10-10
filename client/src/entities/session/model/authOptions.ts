@@ -30,6 +30,7 @@ export const authOptions: NextAuthOptions = {
                         userId: user.userId,
                         email: user.email,
                         accessToken: user.accessToken,
+                        roles: user.roles,
                     };
                 } catch {
                     return null;
@@ -43,6 +44,7 @@ export const authOptions: NextAuthOptions = {
                 token.userId = user.id;
                 token.email = user.email!;
                 token.accessToken = user.accessToken;
+                token.roles = user.roles;
             }
 
             return token;
@@ -50,6 +52,7 @@ export const authOptions: NextAuthOptions = {
         async session({ session, token }) {
             session.user.id = token.userId;
             session.user.email = token.email;
+            session.user.roles = token.roles;
             session.accessToken = token.accessToken;
 
             return session;

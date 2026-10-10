@@ -5,5 +5,6 @@ public record AuthResponse(
     string Email,
     string AccessToken,
     string RefreshToken,
-    DateTime RefreshTokenExpiresAtUtc
+    DateTime RefreshTokenExpiresAtUtc,
+    IEnumerable<string> Roles
 );
