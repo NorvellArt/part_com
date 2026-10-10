@@ -143,7 +143,7 @@ public class IdentityService(
         var accessToken = _tokenService.GenerateAccessToken(domainUser, roles);
         var refreshTokenValue = _tokenService.GenerateRefreshToken();
 
-        var refreshDays = Convert.ToDouble(_configuration["JwtSettings:RefreshTokenExpiryDays"] ?? "7");
+        var refreshDays = Convert.ToDouble(_configuration["JwtSettings:RefreshTokenExpiryDays"] ?? "30");
         var refreshTokenExpiresAt = DateTime.UtcNow.AddDays(refreshDays);
 
         var refreshToken = new RefreshToken

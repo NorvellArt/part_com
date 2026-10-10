@@ -2,12 +2,16 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { HeaderSearch } from '@/features/search-products';
 import { buttonVariants } from '@/shared/components';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/entities/session';
 
-export default function MainLayout({
+export default async function MainLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
+    const session = await getServerSession(authOptions);
+
     return (
         <>
             <header className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur-md">
@@ -30,21 +34,29 @@ export default function MainLayout({
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                        <Link
-                            href="/login"
-                            className={buttonVariants({
-                                variant: 'ghost',
-                                size: 'sm',
-                            })}
-                        >
-                            Войти
-                        </Link>
-                        <Link
-                            href="/register"
-                            className={buttonVariants({ size: 'sm' })}
-                        >
-                            Регистрация
-                        </Link>
+                        {session?.user ? (
+                            <span className="text-sm font-medium text-slate-700 px-3 py-1">
+                                {session.user.email}
+                            </span>
+                        ) : (
+                            <>
+                                <Link
+                                    href="/login"
+                                    className={buttonVariants({
+                                        variant: 'ghost',
+                                        size: 'sm',
+                                    })}
+                                >
+                                    Войти
+                                </Link>
+                                <Link
+                                    href="/register"
+                                    className={buttonVariants({ size: 'sm' })}
+                                >
+                                    Регистрация
+                                </Link>
+                            </>
+                        )}
                     </div>
                 </div>
             </header>

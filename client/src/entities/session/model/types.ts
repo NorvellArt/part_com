@@ -4,8 +4,6 @@ export interface UserAuthDto {
     userId: string;
     email: string;
     accessToken: string;
-    refreshToken: string;
-    refreshTokenExpiresAtUtc: string;
 }
 
 export interface LoginCredentialsDto {

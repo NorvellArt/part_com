@@ -1,10 +1,13 @@
 import { LoginCredentialsDto, UserAuthDto } from '@/entities/session/model/types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5286/api';
+const API_URL = process.env.INTERNAL_API_URL || 'http://localhost:5286';
 
 export const sessionApi = {
     async login(credentials: LoginCredentialsDto): Promise<UserAuthDto> {
-        const res = await fetch(`${API_URL}/auth/login`, {
+        console.log('credentials', credentials)
+        console.log('API_URL', API_URL)
+
+        const res = await fetch(`${API_URL}/api/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(credentials),
@@ -19,7 +22,7 @@ export const sessionApi = {
     },
 
     async refreshToken(data: { accessToken: string; refreshToken: string }): Promise<UserAuthDto> {
-        const res = await fetch(`${API_URL}/auth/refresh-token`, {
+        const res = await fetch(`${API_URL}/api/auth/refresh-token`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data),

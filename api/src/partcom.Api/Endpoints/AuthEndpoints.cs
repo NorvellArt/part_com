@@ -55,7 +55,7 @@ public static class AuthEndpoints
             {
                 userId = result.Value.UserId,
                 email = result.Value.Email,
-                accessToken = result.Value.AccessToken
+                accessToken = result.Value.AccessToken,
             });
         })
         .WithName("Login")
@@ -94,8 +94,7 @@ public static class AuthEndpoints
         })
         .WithName("RefreshToken")
         .Produces(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status401Unauthorized)
-        .RequireAuthorization();
+        .Produces(StatusCodes.Status401Unauthorized);
 
         group.MapPost("/revoke-token", async (
             [FromBody] RevokeTokenRequest? request,
@@ -122,8 +121,7 @@ public static class AuthEndpoints
         })
         .WithName("RevokeToken")
         .Produces(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status400BadRequest)
-        .RequireAuthorization();;
+        .Produces(StatusCodes.Status400BadRequest);
 
         return app;
     }
