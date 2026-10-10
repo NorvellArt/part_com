@@ -121,7 +121,8 @@ public static class AuthEndpoints
         })
         .WithName("RevokeToken")
         .Produces(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status400BadRequest);
+        .Produces(StatusCodes.Status400BadRequest)
+        .RequireAuthorization();;
 
         return app;
     }
