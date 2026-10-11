@@ -10,7 +10,7 @@ export function useRegister() {
 
     return useMutation({
         mutationFn: async (credentials: RegisterCredentialsDto) => {
-            return await fetchApi('/api/auth/register', {
+            return await fetchApi('/api/users/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(credentials),

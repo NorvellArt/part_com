@@ -6,6 +6,7 @@ export interface UserAuthDto {
     email: string;
     accessToken: string;
     roles: RoleType[];
+    refreshToken: string;
 }
 
 export interface LoginCredentialsDto {
@@ -38,6 +39,7 @@ declare module 'next-auth/jwt' {
         userId: string;
         email: string;
         accessToken: string;
+        accessTokenExpiresAt: number;
         refreshToken: string;
         refreshTokenExpiresAtUtc: number;
         roles: RoleType[];

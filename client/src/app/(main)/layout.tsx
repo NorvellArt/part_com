@@ -4,6 +4,7 @@ import { HeaderSearch } from '@/features/search-products';
 import { buttonVariants } from '@/shared/components';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/entities/session';
+import { LogoutButton } from '@/features/auth/ui/LogoutButton';
 
 export default async function MainLayout({
     children,
@@ -35,9 +36,12 @@ export default async function MainLayout({
 
                     <div className="flex items-center gap-2 shrink-0">
                         {session?.user ? (
-                            <span className="text-sm font-medium text-slate-700 px-3 py-1">
-                                {session.user.email}
-                            </span>
+                            <>
+                                <span className="text-sm font-medium text-slate-700 px-3 py-1">
+                                    {session.user.email}
+                                </span>
+                                <LogoutButton />
+                            </>
                         ) : (
                             <>
                                 <Link

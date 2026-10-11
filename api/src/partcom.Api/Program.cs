@@ -38,7 +38,7 @@ app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapAuthEndpoints();
+app.MapUserEndpoints();
 app.MapProductEndpoints();
 
 app.Run();

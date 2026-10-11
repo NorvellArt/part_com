@@ -1,11 +1,7 @@
-const isServer = typeof window === 'undefined';
-
-const internalApiUrl = process.env.INTERNAL_API_URL || 'http://localhost:5286';
-const publicApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5286';
-
-export const API_BASE_URL = isServer ? internalApiUrl : publicApiUrl;
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 export async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    console.log(`${API_BASE_URL}${endpoint}`)
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         ...options,
         headers: {
@@ -15,8 +11,15 @@ export async function fetchApi<T>(endpoint: string, options?: RequestInit): Prom
     });
 
     if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! Status: ${response.status}`);
+        const errorText = await response.text().catch(() => '');
+        let errorMessage = `HTTP error! Status: ${response.status}`;
+        try {
+            const errorData = JSON.parse(errorText);
+            errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch {
+            errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
     }
 
     if (response.status === 204) {

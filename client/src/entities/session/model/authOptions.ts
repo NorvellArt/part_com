@@ -2,6 +2,36 @@ import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { sessionApi } from '@/entities/session/api/sessionApi';
 
+const ACCESS_TOKEN_LIFETIME = 15 * 60 * 1000; 
+
+async function refreshAccessToken(token: any) {
+    try {
+        console.log("==> Срок действия AccessToken истек. Запускаем обновление сессии...");
+        
+        const refreshedTokens = await sessionApi.refreshToken({
+            accessToken: token.accessToken,
+            refreshToken: token.refreshToken,
+        });
+
+        console.log("==> Сессия успешно обновлена");
+
+        return {
+            ...token,
+            accessToken: refreshedTokens.accessToken,
+            refreshToken: refreshedTokens.refreshToken || token.refreshToken,
+            accessTokenExpiresAt: Date.now() + ACCESS_TOKEN_LIFETIME,
+            error: undefined,
+        };
+    } catch (error) {
+        console.error('==> Критическая ошибка ротации токенов:', error);
+        
+        return {
+            ...token,
+            error: 'RefreshAccessTokenError' as const, 
+        };
+    }
+}
+
 export const authOptions: NextAuthOptions = {
     pages: {
         signIn: '/login',
@@ -31,6 +61,7 @@ export const authOptions: NextAuthOptions = {
                         email: user.email,
                         accessToken: user.accessToken,
                         roles: user.roles,
+                        refreshToken: user.refreshToken,
                     };
                 } catch {
                     return null;
@@ -45,15 +76,25 @@ export const authOptions: NextAuthOptions = {
                 token.email = user.email!;
                 token.accessToken = user.accessToken;
                 token.roles = user.roles;
+                token.refreshToken = user.refreshToken;
+                token.accessTokenExpiresAt = Date.now() + ACCESS_TOKEN_LIFETIME;
+                
+                return token;
             }
 
-            return token;
+            if (Date.now() < token.accessTokenExpiresAt - 60 * 1000) {
+                return token;
+            }
+
+            return refreshAccessToken(token);
         },
         async session({ session, token }) {
             session.user.id = token.userId;
             session.user.email = token.email;
             session.user.roles = token.roles;
             session.accessToken = token.accessToken;
+            session.refreshToken = token.refreshToken;
+            session.error = token.error; 
 
             return session;
         },
