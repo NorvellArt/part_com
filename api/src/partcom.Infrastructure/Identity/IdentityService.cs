@@ -52,7 +52,7 @@ public class IdentityService(
 
         await _userManager.AddToRoleAsync(appUser, "User");
 
-        return await GenerateAuthResponseAsync(appUser, cancellationToken);
+        return await GenerateAuthResponseAsync(appUser, null, cancellationToken);
     }
 
     public async Task<Result<AuthResponse>> LoginAsync(
@@ -71,7 +71,7 @@ public class IdentityService(
             return Result<AuthResponse>.Failure("Неверный Email или пароль.");
         }
 
-        return await GenerateAuthResponseAsync(appUser, cancellationToken);
+        return await GenerateAuthResponseAsync(appUser, null, cancellationToken);
     }
 
     public async Task<Result<AuthResponse>> RefreshTokenAsync(
@@ -111,7 +111,7 @@ public class IdentityService(
 
         _dbContext.Set<RefreshToken>().Remove(existingRefreshToken);
 
-        return await GenerateAuthResponseAsync(appUser, cancellationToken);
+        return await GenerateAuthResponseAsync(appUser, existingRefreshToken.Id, cancellationToken);
     }
 
     public async Task<Result> RevokeTokenAsync(
@@ -133,7 +133,8 @@ public class IdentityService(
     }
 
     private async Task<Result<AuthResponse>> GenerateAuthResponseAsync(
-        ApplicationUser appUser, 
+        ApplicationUser appUser,
+        Guid? ignoreTokenId,
         CancellationToken cancellationToken)
     {
         var roles = await _userManager.GetRolesAsync(appUser);
@@ -146,17 +147,23 @@ public class IdentityService(
         var refreshDays = Convert.ToDouble(_configuration["JwtSettings:RefreshTokenExpiryDays"] ?? "30");
         var refreshTokenExpiresAt = DateTime.UtcNow.AddDays(refreshDays);
 
+        var expiredTokensQuery = _dbContext.Set<RefreshToken>()
+            .Where(t => t.UserId == appUser.Id && t.ExpiresAtUtc < DateTime.UtcNow);
+
+        if (ignoreTokenId.HasValue)
+        {
+            expiredTokensQuery = expiredTokensQuery.Where(t => t.Id != ignoreTokenId.Value);
+        }
+
+        var expiredTokens = await expiredTokensQuery.ToListAsync(cancellationToken);
+        _dbContext.Set<RefreshToken>().RemoveRange(expiredTokens);
+
         var refreshToken = new RefreshToken
         {
             Token = refreshTokenValue,
             UserId = appUser.Id,
             ExpiresAtUtc = refreshTokenExpiresAt
         };
-
-        var expiredTokens = _dbContext.Set<RefreshToken>()
-            .Where(t => t.UserId == appUser.Id && t.ExpiresAtUtc < DateTime.UtcNow);
-
-        _dbContext.Set<RefreshToken>().RemoveRange(expiredTokens);
 
         _dbContext.Set<RefreshToken>().Add(refreshToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
