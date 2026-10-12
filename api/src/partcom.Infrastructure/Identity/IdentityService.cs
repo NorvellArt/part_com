@@ -109,7 +109,7 @@ public class IdentityService(
             return Result<AuthResponse>.Failure("Невалидный или истекший Refresh Token.");
         }
 
-        existingRefreshToken.IsRevoked = true;
+        _dbContext.Set<RefreshToken>().Remove(existingRefreshToken);
 
         return await GenerateAuthResponseAsync(appUser, cancellationToken);
     }
@@ -152,6 +152,11 @@ public class IdentityService(
             UserId = appUser.Id,
             ExpiresAtUtc = refreshTokenExpiresAt
         };
+
+        var expiredTokens = _dbContext.Set<RefreshToken>()
+            .Where(t => t.UserId == appUser.Id && t.ExpiresAtUtc < DateTime.UtcNow);
+
+        _dbContext.Set<RefreshToken>().RemoveRange(expiredTokens);
 
         _dbContext.Set<RefreshToken>().Add(refreshToken);
         await _dbContext.SaveChangesAsync(cancellationToken);

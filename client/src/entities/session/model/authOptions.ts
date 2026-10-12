@@ -94,8 +94,8 @@ export const authOptions: NextAuthOptions = {
             session.user.roles = token.roles;
             session.accessToken = token.accessToken;
             session.refreshToken = token.refreshToken;
-            session.error = token.error; 
-
+            session.error = token.error;
+            
             return session;
         },
     },
