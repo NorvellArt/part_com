@@ -62,7 +62,8 @@ export function Pagination({ currentPage, totalPages }: PaginationProps) {
             if (page === 'ellipsis') {
                 return (
                     <PaginationItem key={`ellipsis-${index}`}>
-                        <PaginationEllipsis />
+                        {/* Добавлен класс w-8 h-8 для уменьшения высоты троеточия */}
+                        <PaginationEllipsis className="w-8 h-8 flex items-center justify-center" />
                     </PaginationItem>
                 );
             }
@@ -73,6 +74,8 @@ export function Pagination({ currentPage, totalPages }: PaginationProps) {
                         href={createPageUrl(page)}
                         isActive={currentPage === page}
                         onClick={(e) => handlePageChange(e, page)}
+                        size="sm"
+                        className="w-8 h-8 p-0"
                     >
                         {page}
                     </PaginationLink>
@@ -85,8 +88,8 @@ export function Pagination({ currentPage, totalPages }: PaginationProps) {
     const isNextDisabled = currentPage >= totalPages;
 
     return (
-        <ShadcnPagination className="my-6">
-            <PaginationContent>
+        <ShadcnPagination className="my-0">
+            <PaginationContent className="gap-1">
                 <PaginationItem>
                     <PaginationPrevious
                         text="Предыдущая"
@@ -102,10 +105,11 @@ export function Pagination({ currentPage, totalPages }: PaginationProps) {
                         }
                         aria-disabled={isPrevDisabled}
                         tabIndex={isPrevDisabled ? -1 : undefined}
+                        size="sm"
                         className={
                             isPrevDisabled
-                                ? 'pointer-events-none opacity-50'
-                                : ''
+                                ? 'pointer-events-none opacity-50 h-8 px-2 text-xs'
+                                : 'h-8 px-2 text-xs'
                         }
                     />
                 </PaginationItem>
@@ -127,10 +131,11 @@ export function Pagination({ currentPage, totalPages }: PaginationProps) {
                         }
                         aria-disabled={isNextDisabled}
                         tabIndex={isNextDisabled ? -1 : undefined}
+                        size="sm"
                         className={
                             isNextDisabled
-                                ? 'pointer-events-none opacity-50'
-                                : ''
+                                ? 'pointer-events-none opacity-50 h-8 px-2 text-xs'
+                                : 'h-8 px-2 text-xs'
                         }
                     />
                 </PaginationItem>

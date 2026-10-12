@@ -11,7 +11,7 @@ export default async function CatalogPage({ searchParams }: PageProps) {
     const page = Number(resolvedParams.page) || 1;
 
     return (
-        <main className="container mx-auto p-6">
+        <div className="w-full py-2">
             <Suspense
                 key={`${query}-${page}`}
                 fallback={
@@ -25,6 +25,6 @@ export default async function CatalogPage({ searchParams }: PageProps) {
                     page={page}
                 />
             </Suspense>
-        </main>
+        </div>
     );
 }
