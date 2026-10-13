@@ -37,6 +37,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
             entity.Property(e => e.Price).HasPrecision(18, 2);
 
+            entity.HasIndex(e => new { e.ItemNumber, e.Brand }, "IX_Products_Lower_ItemNumber_Brand");
+
             entity.HasIndex(e => e.ItemNumber)
                   .HasMethod("gin")
                   .HasOperators("gin_trgm_ops");

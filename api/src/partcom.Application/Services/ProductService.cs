@@ -98,23 +98,32 @@ public class ProductService(
 
         var parsedProducts = await _excelParser.ParseProductsAsync(fileStream, cancellationToken);
 
-        var excelItemNumbers = parsedProducts
-            .Select(p => p.ItemNumber)
-            .Where(x => !string.IsNullOrEmpty(x))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
+        var excelKeys = parsedProducts
+            .Where(p => !string.IsNullOrWhiteSpace(p.ItemNumber) && !string.IsNullOrWhiteSpace(p.Brand))
+            .Select(p => new ProductCompositeKey(p.ItemNumber.Trim(), p.Brand.Trim()))
+            .Distinct()
             .ToList();
 
-        var existingProducts = await _productRepository.GetByItemNumbersAsync(excelItemNumbers, cancellationToken);
+        var existingProductsList = await _productRepository.GetByCompositeKeysAsync(excelKeys, cancellationToken);
+
+        var existingProducts = existingProductsList.ToDictionary(
+            p => (ItemNumber: p.ItemNumber.Trim().ToLowerInvariant(), Brand: p.Brand.Trim().ToLowerInvariant())
+        );
 
         var productsToAdd = new List<Product>();
-        var productsToUpdate = new Dictionary<string, Product>(StringComparer.OrdinalIgnoreCase);
+        var productsToUpdate = new Dictionary<(string, string), Product>();
 
         foreach (var parsedProduct in parsedProducts)
         {
-            if (string.IsNullOrWhiteSpace(parsedProduct.ItemNumber))
+            if (string.IsNullOrWhiteSpace(parsedProduct.ItemNumber) || string.IsNullOrWhiteSpace(parsedProduct.Brand))
                 continue;
 
-            if (existingProducts.TryGetValue(parsedProduct.ItemNumber, out var existingProduct))
+            var currentKey = (
+                ItemNumber: parsedProduct.ItemNumber.Trim().ToLowerInvariant(),
+                Brand: parsedProduct.Brand.Trim().ToLowerInvariant()
+            );
+
+            if (existingProducts.TryGetValue(currentKey, out var existingProduct))
             {
                 existingProduct.Update(
                     parsedProduct.Brand,
@@ -124,12 +133,12 @@ public class ProductService(
                     parsedProduct.Quantity
                 );
 
-                productsToUpdate[existingProduct.ItemNumber] = existingProduct;
+                productsToUpdate[currentKey] = existingProduct;
             }
             else
             {
                 productsToAdd.Add(parsedProduct);
-                existingProducts[parsedProduct.ItemNumber] = parsedProduct;
+                existingProducts[currentKey] = parsedProduct;
             }
         }
 

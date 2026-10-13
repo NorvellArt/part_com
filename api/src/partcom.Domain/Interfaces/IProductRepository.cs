@@ -6,8 +6,8 @@ using partcom.Domain.Entities;
 public interface IProductRepository
 {
     Task<Product?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<Dictionary<string, Product>> GetByItemNumbersAsync(
-        IEnumerable<string> itemNumbers,
+    Task<List<Product>> GetByCompositeKeysAsync(
+        List<ProductCompositeKey> keys,
         CancellationToken cancellationToken = default);
     Task<PagedResult<Product>> SearchAsync(
         string? query,

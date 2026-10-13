@@ -302,6 +302,8 @@ namespace partcom.Infrastructure.Migrations
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Name"), "gin");
                     NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Name"), new[] { "gin_trgm_ops" });
 
+                    b.HasIndex(new[] { "ItemNumber", "Brand" }, "IX_Products_Lower_ItemNumber_Brand");
+
                     b.ToTable("Products", (string)null);
                 });
 

@@ -3,6 +3,8 @@ using partcom.Domain.Interfaces;
 using partcom.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using partcom.Domain.Common;
+using System.Linq.Expressions;
+using System.Reflection;
 
 namespace partcom.Infrastructure.Repositories;
 
@@ -19,31 +21,53 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
         return entity is null ? null : MapToDomain(entity);
     }
 
-    public async Task<Dictionary<string, Product>> GetByItemNumbersAsync(
-        IEnumerable<string> itemNumbers,
-        CancellationToken cancellationToken = default)
+    public async Task<List<Product>> GetByCompositeKeysAsync(
+    List<ProductCompositeKey> keys,
+    CancellationToken cancellationToken = default)
     {
-        var distinctNumbers = itemNumbers
-            .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-        var result = new Dictionary<string, Product>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var chunk in distinctNumbers.Chunk(1000))
+        if (keys == null || keys.Count == 0)
         {
-            var entities = await _context.Products
-                .Where(p => chunk.Contains(p.ItemNumber))
-                .ToListAsync(cancellationToken);
-
-            foreach (var entity in entities)
-            {
-                var domainProduct = MapToDomain(entity);
-                result[entity.ItemNumber] = domainProduct;
-            }
+            return [];
         }
 
-        return result;
+        var query = _context.Set<ProductEntity>().AsQueryable();
+        var parameter = Expression.Parameter(typeof(ProductEntity), "p");
+        Expression? combinedExpression = null;
+
+        MethodInfo toLowerMethod = typeof(string).GetMethod("ToLower", Type.EmptyTypes)!;
+
+        foreach (var key in keys)
+        {
+            var dbItemNumberLower = Expression.Call(
+                Expression.Property(parameter, nameof(ProductEntity.ItemNumber)),
+                toLowerMethod
+            );
+            var itemNumberEqual = Expression.Equal(
+                dbItemNumberLower,
+                Expression.Constant(key.ItemNumber.Trim().ToLowerInvariant())
+            );
+
+            var dbBrandLower = Expression.Call(
+                Expression.Property(parameter, nameof(ProductEntity.Brand)),
+                toLowerMethod
+            );
+            var brandEqual = Expression.Equal(
+                dbBrandLower,
+                Expression.Constant(key.Brand.Trim().ToLowerInvariant())
+            );
+
+            var currentKeyExpression = Expression.AndAlso(itemNumberEqual, brandEqual);
+
+            combinedExpression = combinedExpression == null
+                ? currentKeyExpression
+                : Expression.OrElse(combinedExpression, currentKeyExpression);
+        }
+
+        var lambda = Expression.Lambda<Func<ProductEntity, bool>>(combinedExpression!, parameter);
+
+        var dbEntities = await query.Where(lambda).ToListAsync(cancellationToken);
+
+        return [.. dbEntities.Select(MapToDomain)];
     }
 
     public async Task<PagedResult<Product>> SearchAsync(string? query,
@@ -127,31 +151,32 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
         var entity = await _context.Products.FirstOrDefaultAsync(p => p.Id == product.Id, ct);
         if (entity is null) return;
 
-        entity.Brand = product.Brand;
-        entity.ItemNumber = product.ItemNumber;
-        entity.Name = product.Name;
-        entity.Price = product.Price;
-        entity.Quantity = product.Quantity;
-        entity.ImageUrl = "";
+        UpdateEntityFromDomain(entity, product);
     }
 
     public async Task UpdateRangeAsync(IEnumerable<Product> products, CancellationToken cancellationToken = default)
     {
-        var itemNumbers = products.Select(p => p.ItemNumber).ToList();
-
-        var entities = await _context.Products
-            .Where(p => itemNumbers.Contains(p.ItemNumber))
-            .ToDictionaryAsync(p => p.ItemNumber, StringComparer.OrdinalIgnoreCase, cancellationToken);
+        if (products == null || !products.Any()) return;
 
         foreach (var product in products)
         {
-            if (entities.TryGetValue(product.ItemNumber, out var entity))
+            var trackedEntity = _context.Products.Local.FirstOrDefault(p => p.Id == product.Id);
+
+            trackedEntity ??= await _context.Products.FirstOrDefaultAsync(p => p.Id == product.Id, cancellationToken);
+
+            if (trackedEntity != null)
             {
-                entity.Brand = product.Brand;
-                entity.Name = product.Name;
-                entity.Price = product.Price;
-                entity.Quantity = product.Quantity;
-                entity.ImageUrl = product.ImageUrl;
+                trackedEntity.Brand = product.Brand;
+                trackedEntity.ItemNumber = product.ItemNumber;
+                trackedEntity.Name = product.Name;
+                trackedEntity.Price = product.Price;
+                trackedEntity.Quantity = product.Quantity;
+                trackedEntity.ImageUrl = product.ImageUrl;
+            }
+            else
+            {
+                var newEntity = MapToEntity(product);
+                _context.Products.Update(newEntity);
             }
         }
     }
@@ -196,5 +221,15 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
             Quantity = product.Quantity,
             ImageUrl = product.ImageUrl
         };
+    }
+
+    private static void UpdateEntityFromDomain(ProductEntity entity, Product product)
+    {
+        entity.Brand = product.Brand;
+        entity.ItemNumber = product.ItemNumber;
+        entity.Name = product.Name;
+        entity.Price = product.Price;
+        entity.Quantity = product.Quantity;
+        entity.ImageUrl = product.ImageUrl;
     }
 }

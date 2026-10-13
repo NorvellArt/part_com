@@ -2,12 +2,12 @@ import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { sessionApi } from '@/entities/session/api/sessionApi';
 
-const ACCESS_TOKEN_LIFETIME = 15 * 60 * 1000; 
+const ACCESS_TOKEN_LIFETIME = 15 * 60 * 1000;
 
 async function refreshAccessToken(token: any) {
     try {
         console.log("==> Срок действия AccessToken истек. Запускаем обновление сессии...");
-        
+
         const refreshedTokens = await sessionApi.refreshToken({
             accessToken: token.accessToken,
             refreshToken: token.refreshToken,
@@ -23,11 +23,11 @@ async function refreshAccessToken(token: any) {
             error: undefined,
         };
     } catch (error) {
-        console.error('==> Критическая ошибка ротации токенов:', error);
-        
+        console.warn('==> Критическая ошибка ротации токенов:', error);
+
         return {
             ...token,
-            error: 'RefreshAccessTokenError' as const, 
+            error: 'RefreshAccessTokenError' as const,
         };
     }
 }
@@ -78,7 +78,7 @@ export const authOptions: NextAuthOptions = {
                 token.roles = user.roles;
                 token.refreshToken = user.refreshToken;
                 token.accessTokenExpiresAt = Date.now() + ACCESS_TOKEN_LIFETIME;
-                
+
                 return token;
             }
 
@@ -95,7 +95,13 @@ export const authOptions: NextAuthOptions = {
             session.accessToken = token.accessToken;
             session.refreshToken = token.refreshToken;
             session.error = token.error;
-            
+
+            if (token.error === 'RefreshAccessTokenError' && !token.accessToken) {
+                session.error = token.error;
+            } else {
+                session.error = undefined;
+            }
+
             return session;
         },
     },
