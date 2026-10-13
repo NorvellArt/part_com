@@ -4,14 +4,23 @@ import { sessionApi } from '@/entities/session/api/sessionApi';
 
 const ACCESS_TOKEN_LIFETIME = 15 * 60 * 1000;
 
+let refreshPromise: Promise<{ accessToken: string; refreshToken: string }> | null = null;
+
 async function refreshAccessToken(token: any) {
     try {
-        console.log("==> Срок действия AccessToken истек. Запускаем обновление сессии...");
+        if (!refreshPromise) {
+            console.log("==> [NextAuth] Инициализация единственного запроса на обновление сессии...");
+            refreshPromise = sessionApi.refreshToken({
+                accessToken: token.accessToken,
+                refreshToken: token.refreshToken,
+            }).finally(() => {
+                refreshPromise = null;
+            });
+        } else {
+            console.log("==> [NextAuth] Запрос на обновление уже выполняется. Подключаемся к существующему потоку...");
+        }
 
-        const refreshedTokens = await sessionApi.refreshToken({
-            accessToken: token.accessToken,
-            refreshToken: token.refreshToken,
-        });
+        const refreshedTokens = await refreshPromise;
 
         console.log("==> Сессия успешно обновлена");
 
