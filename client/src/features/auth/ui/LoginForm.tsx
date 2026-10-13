@@ -1,44 +1,55 @@
 'use client';
 
-import { useState } from 'react';
-import { useLogin } from '@/features/auth/model/useLogin';
+import Link from 'next/link';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+    useLogin,
+    loginSchema,
+    type LoginFormValues,
+    AuthField,
+} from '@/features/auth';
 import {
     Button,
-    Input,
-    Label,
     Card,
     CardContent,
+    CardFooter,
     CardHeader,
     CardTitle,
     Alert,
     AlertDescription,
-    CardFooter,
     buttonVariants,
+    FieldGroup,
 } from '@/shared/components';
-import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
 export function LoginForm() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const { mutate: login, isPending, error } = useLogin();
+    const { mutate: login, isPending, error: serverError } = useLogin();
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        login({ email, password });
+    const form = useForm<LoginFormValues>({
+        resolver: zodResolver(loginSchema),
+        mode: 'onTouched',
+        defaultValues: {
+            email: '',
+            password: '',
+        },
+    });
+
+    const onSubmit = (data: LoginFormValues) => {
+        login({ email: data.email, password: data.password });
     };
 
     return (
-        <Card className="w-full max-w-l">
-            <CardHeader className="space-y-1">
-                <div className="flex items-center justify-between mb-2">
+        <Card className="w-full sm:w-[400px] shadow-lg border-muted/70 bg-card rounded-xl overflow-hidden">
+            <CardHeader className="space-y-1.5 pt-6 px-6 pb-4">
+                <div className="flex items-center mb-1">
                     <Link
                         href="/"
                         className={buttonVariants({
                             variant: 'ghost',
                             size: 'sm',
                             className:
-                                'gap-1 text-xs text-muted-foreground hover:text-foreground px-2 py-1 h-auto',
+                                'gap-1.5 text-xs text-muted-foreground hover:text-foreground px-2 py-1 h-auto rounded-md -ml-2',
                         })}
                     >
                         <ArrowLeft className="w-3.5 h-3.5" />
@@ -46,63 +57,75 @@ export function LoginForm() {
                     </Link>
                 </div>
 
-                <CardTitle className="text-2xl font-bold text-center">
-                    Вход в систему
-                </CardTitle>
+                <div className="space-y-1 text-center">
+                    <CardTitle className="text-2xl font-semibold tracking-tight text-foreground">
+                        Вход в систему
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground">
+                        Введите свои данные для авторизации
+                    </p>
+                </div>
             </CardHeader>
 
-            <CardContent>
+            <CardContent className="px-6 py-2">
                 <form
-                    onSubmit={handleSubmit}
-                    className="space-y-4"
+                    id="login-form"
+                    onSubmit={form.handleSubmit(onSubmit)}
                 >
-                    {error && (
-                        <Alert variant="destructive">
-                            <AlertDescription>{error.message}</AlertDescription>
-                        </Alert>
-                    )}
+                    <FieldGroup className="flex flex-col gap-4 space-y-0 h-auto items-stretch w-full">
+                        {serverError && (
+                            <Alert
+                                variant="destructive"
+                                className="py-2.5 rounded-lg border-destructive/30 bg-destructive/10 text-destructive"
+                            >
+                                <AlertDescription className="text-xs font-medium">
+                                    {serverError.message ||
+                                        'Неверный Email или пароль'}
+                                </AlertDescription>
+                            </Alert>
+                        )}
 
-                    <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                            id="email"
+                        <AuthField
+                            name="email"
+                            label="Email"
                             type="email"
-                            required
                             placeholder="user@example.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            autoComplete="email"
+                            control={form.control}
+                            disabled={isPending}
                         />
-                    </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="password">Пароль</Label>
-                        <Input
-                            id="password"
+                        <AuthField
+                            name="password"
+                            label="Пароль"
                             type="password"
-                            required
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            autoComplete="current-password"
+                            control={form.control}
+                            disabled={isPending}
                         />
-                    </div>
-
-                    <Button
-                        type="submit"
-                        className="w-full"
-                        disabled={isPending}
-                    >
-                        {isPending ? 'Выполняется вход...' : 'Войти'}
-                    </Button>
+                    </FieldGroup>
                 </form>
             </CardContent>
 
-            <CardFooter className="justify-center border-t pt-4 text-sm text-muted-foreground">
-                Нет аккаунта?{' '}
-                <Link
-                    href="/register"
-                    className="ml-1 text-primary underline-offset-4 hover:underline font-medium"
+            <CardFooter className="flex flex-col gap-3 px-6 pt-5 pb-6 border-t border-muted/50 bg-muted/20 mt-4">
+                <Button
+                    type="submit"
+                    form="login-form"
+                    className="w-full h-9 rounded-lg shadow-sm font-medium"
+                    disabled={isPending}
                 >
-                    Зарегистрироваться
-                </Link>
+                    {isPending ? 'Выполняется вход...' : 'Войти'}
+                </Button>
+
+                <div className="text-xs text-muted-foreground text-center w-full">
+                    Нет аккаунта?{' '}
+                    <Link
+                        href="/register"
+                        className="ml-1 text-primary underline-offset-4 hover:underline font-medium transition-colors"
+                    >
+                        Зарегистрироваться
+                    </Link>
+                </div>
             </CardFooter>
         </Card>
     );

@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
-import { useRegister } from '@/features/auth';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useRegister, registerSchema, type RegisterFormValues } from '@/features/auth';
+import { AuthField } from '@/features/auth';
 import {
     Button,
-    Input,
-    Label,
     Card,
     CardContent,
     CardFooter,
@@ -15,119 +15,99 @@ import {
     Alert,
     AlertDescription,
     buttonVariants,
+    FieldGroup,
 } from '@/shared/components';
 import { ArrowLeft } from 'lucide-react';
 
 export function RegisterForm() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [validationError, setValidationError] = useState<string | null>(null);
+    const { mutate: register, isPending, error: serverError } = useRegister();
 
-    const { mutate: register, isPending, error } = useRegister();
+    const form = useForm<RegisterFormValues>({
+        resolver: zodResolver(registerSchema),
+        mode: 'onTouched',
+        defaultValues: { email: '', password: '', confirmPassword: '' },
+    });
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        setValidationError(null);
-
-        if (password !== confirmPassword) {
-            setValidationError('Пароли не совпадают');
-            return;
-        }
-
-        register({ email, password });
+    const onSubmit = (data: RegisterFormValues) => {
+        register({ email: data.email, password: data.password });
     };
 
-    const activeError = validationError || error?.message;
-
     return (
-        <Card className="w-full max-w-sm">
-            <CardHeader className="space-y-1">
-                <div className="flex items-center justify-between mb-2">
+        <Card className="w-full sm:w-[400px] shadow-lg border-muted/70 bg-card rounded-xl overflow-hidden">
+            <CardHeader className="space-y-1.5 pt-6 px-6 pb-4">
+                <div className="flex items-center mb-1">
                     <Link
                         href="/"
                         className={buttonVariants({
                             variant: 'ghost',
                             size: 'sm',
-                            className:
-                                'gap-1 text-xs text-muted-foreground hover:text-foreground px-2 py-1 h-auto',
+                            className: 'gap-1.5 text-xs text-muted-foreground hover:text-foreground px-2 py-1 h-auto rounded-md -ml-2',
                         })}
                     >
                         <ArrowLeft className="w-3.5 h-3.5" />
                         На главную
                     </Link>
                 </div>
-
-                <CardTitle className="text-2xl font-bold text-center">
-                    Регистрация
-                </CardTitle>
+                <div className="space-y-1 text-center">
+                    <CardTitle className="text-2xl font-semibold tracking-tight text-foreground">
+                        Создать аккаунт
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground">
+                        Введите свои данные для регистрации в системе
+                    </p>
+                </div>
             </CardHeader>
 
-            <CardContent>
-                <form
-                    onSubmit={handleSubmit}
-                    className="space-y-4"
-                >
-                    {activeError && (
-                        <Alert variant="destructive">
-                            <AlertDescription>{activeError}</AlertDescription>
-                        </Alert>
-                    )}
+            <CardContent className="px-6 py-2">
+                <form id="register-form" onSubmit={form.handleSubmit(onSubmit)}>
+                    <FieldGroup className="flex flex-col gap-4 space-y-0 h-auto items-stretch w-full">
+                        {serverError && (
+                            <Alert variant="destructive" className="py-2.5 rounded-lg border-destructive/30 bg-destructive/10 text-destructive">
+                                <AlertDescription className="text-xs font-medium">
+                                    {serverError.message || 'Произошла ошибка при регистрации'}
+                                </AlertDescription>
+                            </Alert>
+                        )}
 
-                    <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                            id="email"
+                        <AuthField
+                            name="email"
+                            label="Email"
                             type="email"
-                            required
                             placeholder="user@example.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            autoComplete="email"
+                            control={form.control}
+                            disabled={isPending}
                         />
-                    </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="password">Пароль</Label>
-                        <Input
-                            id="password"
-                            type="password"
-                            required
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                        <AuthField
+                            name="password"
+                            label="Пароль"
+                            autoComplete="new-password"
+                            control={form.control}
+                            disabled={isPending}
                         />
-                    </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="confirmPassword">
-                            Подтверждение пароля
-                        </Label>
-                        <Input
-                            id="confirmPassword"
-                            type="password"
-                            required
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
+                        <AuthField
+                            name="confirmPassword"
+                            label="Подтверждение пароля"
+                            autoComplete="new-password"
+                            control={form.control}
+                            disabled={isPending}
                         />
-                    </div>
-
-                    <Button
-                        type="submit"
-                        className="w-full"
-                        disabled={isPending}
-                    >
-                        {isPending ? 'Загрузка...' : 'Зарегистрироваться'}
-                    </Button>
+                    </FieldGroup>
                 </form>
             </CardContent>
 
-            <CardFooter className="justify-center border-t pt-4 text-sm text-muted-foreground">
-                Уже есть аккаунт?{' '}
-                <Link
-                    href="/login"
-                    className="ml-1 text-primary underline-offset-4 hover:underline font-medium"
-                >
-                    Войти
-                </Link>
+            <CardFooter className="flex flex-col gap-3 px-6 pt-5 pb-6 border-t border-muted/50 bg-muted/20 mt-4">
+                <Button type="submit" form="register-form" className="w-full h-9 rounded-lg shadow-sm font-medium" disabled={isPending}>
+                    {isPending ? 'Создание аккаунта...' : 'Зарегистрироваться'}
+                </Button>
+                <div className="text-xs text-muted-foreground text-center w-full">
+                    Уже есть аккаунт?
+                    <Link href="/login" className="ml-1 text-primary underline-offset-4 hover:underline font-medium">
+                        Войти
+                    </Link>
+                </div>
             </CardFooter>
         </Card>
     );
