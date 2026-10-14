@@ -2,45 +2,6 @@ import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { sessionApi } from '@/entities/session/api/sessionApi';
 
-const ACCESS_TOKEN_LIFETIME = 15 * 60 * 1000;
-
-let refreshPromise: Promise<{ accessToken: string; refreshToken: string }> | null = null;
-
-async function refreshAccessToken(token: any) {
-    try {
-        if (!refreshPromise) {
-            console.log("==> [NextAuth] Инициализация единственного запроса на обновление сессии...");
-            refreshPromise = sessionApi.refreshToken({
-                accessToken: token.accessToken,
-                refreshToken: token.refreshToken,
-            }).finally(() => {
-                refreshPromise = null;
-            });
-        } else {
-            console.log("==> [NextAuth] Запрос на обновление уже выполняется. Подключаемся к существующему потоку...");
-        }
-
-        const refreshedTokens = await refreshPromise;
-
-        console.log("==> Сессия успешно обновлена");
-
-        return {
-            ...token,
-            accessToken: refreshedTokens.accessToken,
-            refreshToken: refreshedTokens.refreshToken || token.refreshToken,
-            accessTokenExpiresAt: Date.now() + ACCESS_TOKEN_LIFETIME,
-            error: undefined,
-        };
-    } catch (error) {
-        console.warn('==> Критическая ошибка ротации токенов:', error);
-
-        return {
-            ...token,
-            error: 'RefreshAccessTokenError' as const,
-        };
-    }
-}
-
 export const authOptions: NextAuthOptions = {
     pages: {
         signIn: '/login',
@@ -68,9 +29,8 @@ export const authOptions: NextAuthOptions = {
                         id: String(user.userId),
                         userId: user.userId,
                         email: user.email,
-                        accessToken: user.accessToken,
                         roles: user.roles,
-                        refreshToken: user.refreshToken,
+                        sessionId: user.sessionId,
                     };
                 } catch {
                     return null;
@@ -81,35 +41,22 @@ export const authOptions: NextAuthOptions = {
     callbacks: {
         async jwt({ token, user }) {
             if (user) {
-                token.userId = user.id;
+                token.userId = user.userId;
                 token.email = user.email!;
-                token.accessToken = user.accessToken;
                 token.roles = user.roles;
-                token.refreshToken = user.refreshToken;
-                token.accessTokenExpiresAt = Date.now() + ACCESS_TOKEN_LIFETIME;
-
+                token.sessionId = user.sessionId;
                 return token;
             }
 
-            if (Date.now() < token.accessTokenExpiresAt - 60 * 1000) {
-                return token;
-            }
-
-            return refreshAccessToken(token);
+            return token;
         },
         async session({ session, token }) {
-            session.user.id = token.userId;
+            session.user.id = String(token.userId);
             session.user.email = token.email;
             session.user.roles = token.roles;
-            session.accessToken = token.accessToken;
-            session.refreshToken = token.refreshToken;
-            session.error = token.error;
+            session.sessionId = token.sessionId;
 
-            if (token.error === 'RefreshAccessTokenError' && !token.accessToken) {
-                session.error = token.error;
-            } else {
-                session.error = undefined;
-            }
+            session.error = undefined;
 
             return session;
         },

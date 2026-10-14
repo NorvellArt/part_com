@@ -15,7 +15,7 @@ export function useLogout() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    refreshToken: session?.refreshToken || null,
+                    sessionId: session?.sessionId || null,
                 }),
             });
 

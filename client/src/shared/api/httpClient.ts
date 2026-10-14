@@ -1,4 +1,6 @@
 import { getSession } from "next-auth/react";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/entities/session/model/authOptions";
 
 const isServer = typeof window === 'undefined';
 
@@ -16,11 +18,12 @@ export async function fetchApi<T>(endpoint: string, options?: RequestInit): Prom
         headers.set('Content-Type', 'application/json');
     }
     
-    if (!isServer) {
-        const session = await getSession();
-        if (session?.accessToken) {
-            headers.set('Authorization', `Bearer ${session.accessToken}`);
-        }
+    const session = isServer 
+        ? await getServerSession(authOptions) 
+        : await getSession();
+
+    if (session?.sessionId) {
+        headers.set('X-Session-Id', session.sessionId);
     }
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {

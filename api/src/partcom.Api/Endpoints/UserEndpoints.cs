@@ -27,46 +27,13 @@ public static class UserEndpoints
             {
                 userId = result.Value.UserId,
                 email = result.Value.Email,
-                accessToken = result.Value.AccessToken,
                 roles = result.Value.Roles,
-                refreshToken = result.Value.RefreshToken
+                sessionId = result.Value.SessionId
             });
         })
         .WithName("Login")
         .Produces(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status400BadRequest);
-
-        group.MapPost("/refresh-token", async (
-            [FromBody] RefreshTokenBodyRequest request,
-            IIdentityService identityService,
-            CancellationToken ct) =>
-        {
-            var refreshToken = request.RefreshToken;
-
-            if (string.IsNullOrEmpty(refreshToken))
-            {
-                return Results.BadRequest(new { error = "Refresh Token не передан." });
-            }
-
-            var refreshRequest = new RefreshTokenRequest(request.AccessToken, refreshToken);
-            var result = await identityService.RefreshTokenAsync(refreshRequest, ct);
-
-            if (!result.IsSuccess || result.Value is null)
-            {
-                return Results.Unauthorized();
-            }
-
-            return Results.Ok(new
-            {
-                userId = result.Value.UserId,
-                email = result.Value.Email,
-                accessToken = result.Value.AccessToken,
-                refreshToken = result.Value.RefreshToken
-            });
-        })
-        .WithName("RefreshToken")
-        .Produces(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status401Unauthorized);
 
         group.MapPost("/register", async (
             [FromBody] RegisterRequest request,
@@ -84,8 +51,8 @@ public static class UserEndpoints
             {
                 userId = result.Value.UserId,
                 email = result.Value.Email,
-                accessToken = result.Value.AccessToken,
-                refreshToken = result.Value.RefreshToken
+                roles = result.Value.Roles,
+                sessionId = result.Value.SessionId
             });
         })
         .WithName("Register")
@@ -97,12 +64,12 @@ public static class UserEndpoints
             IIdentityService identityService,
             CancellationToken ct) =>
         {
-            if (request == null || string.IsNullOrEmpty(request.RefreshToken))
+            if (request == null || string.IsNullOrEmpty(request.SessionId))
             {
-                return Results.BadRequest(new { error = "Refresh Token не передан." });
+                return Results.BadRequest(new { error = "Session Id не передан." });
             }
 
-            var result = await identityService.RevokeTokenAsync(request.RefreshToken, ct);
+            var result = await identityService.RevokeSessionAsync(request.SessionId, ct);
             if (!result.IsSuccess)
             {
                 return Results.BadRequest(new { error = result.Error });
@@ -118,5 +85,4 @@ public static class UserEndpoints
     }
 }
 
-public record RefreshTokenBodyRequest(string AccessToken, string? RefreshToken);
-public record RevokeSessionRequest(string RefreshToken);
+public record RevokeSessionRequest(string SessionId);

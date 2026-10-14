@@ -1,12 +1,7 @@
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
-
-using System.Text;
-
 using partcom.Application.Interfaces;
 using partcom.Infrastructure.Identity;
 using partcom.Infrastructure.Persistence;
@@ -42,34 +37,17 @@ public static class DependencyInjection
         .AddEntityFrameworkStores<AppDbContext>()
         .AddDefaultTokenProviders();
 
-        var jwtSecret = configuration["JwtSettings:Secret"]
-            ?? throw new InvalidOperationException("JWT Secret is not configured.");
-
+        // ВМЕСТО JWT BEARER: Регистрируем кастомную сессионную схему аутентификации.
+        // Она будет перехватывать заголовок X-Session-Id через наш SessionAuthenticationHandler.
         services.AddAuthentication(options =>
         {
-            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultAuthenticateScheme = "PartcomSessionScheme";
+            options.DefaultChallengeScheme = "PartcomSessionScheme";
         })
-        .AddJwtBearer(options =>
-        {
-            options.RequireHttpsMetadata = false; // true в продакшене + https
-            options.SaveToken = true;
-            options.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidIssuer = configuration["JwtSettings:Issuer"],
-                ValidateAudience = true,
-                ValidAudience = configuration["JwtSettings:Audience"],
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
-                ValidateLifetime = true,
-                ClockSkew = TimeSpan.Zero
-            };
-        });
+        .AddScheme<SessionSchemeOptions, SessionAuthenticationHandler>("PartcomSessionScheme", null);
 
         services.AddAuthorization();
 
-        services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IIdentityService, IdentityService>();
 
         services.AddScoped<IProductRepository, PostgresProductRepository>();

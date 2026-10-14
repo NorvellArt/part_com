@@ -1,30 +1,20 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
-
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-
 using partcom.Application.Common;
 using partcom.Application.DTOs.Auth;
 using partcom.Application.Interfaces;
-using partcom.Domain.Entities;
 using partcom.Infrastructure.Persistence;
 
 namespace partcom.Infrastructure.Identity;
 
 public class IdentityService(
     UserManager<ApplicationUser> userManager,
-    ITokenService tokenService,
-    AppDbContext dbContext,
-    IConfiguration configuration) : IIdentityService
+    AppDbContext dbContext) : IIdentityService
 {
     private readonly UserManager<ApplicationUser> _userManager = userManager;
-    private readonly ITokenService _tokenService = tokenService;
     private readonly AppDbContext _dbContext = dbContext;
-    private readonly IConfiguration _configuration = configuration;
+    private const string SessionProvider = "PartcomIdentitySession";
+    private const string SessionTokenName = "SessionId";
 
     public async Task<Result<AuthResponse>> RegisterAsync(
         RegisterRequest request, 
@@ -52,7 +42,7 @@ public class IdentityService(
 
         await _userManager.AddToRoleAsync(appUser, "User");
 
-        return await GenerateAuthResponseAsync(appUser, null, cancellationToken);
+        return await GenerateSessionResponseAsync(appUser, cancellationToken);
     }
 
     public async Task<Result<AuthResponse>> LoginAsync(
@@ -71,138 +61,48 @@ public class IdentityService(
             return Result<AuthResponse>.Failure("Неверный Email или пароль.");
         }
 
-        return await GenerateAuthResponseAsync(appUser, null, cancellationToken);
+        return await GenerateSessionResponseAsync(appUser, cancellationToken);
     }
 
-    public async Task<Result<AuthResponse>> RefreshTokenAsync(
-        RefreshTokenRequest request, 
+    public async Task<Result> RevokeSessionAsync(
+        string sessionId, 
         CancellationToken cancellationToken = default)
     {
-        var principal = GetPrincipalFromExpiredToken(request.AccessToken);
-        if (principal == null)
+        var userToken = await _dbContext.UserTokens
+            .FirstOrDefaultAsync(t => t.LoginProvider == SessionProvider && 
+                                      t.Name == SessionTokenName && 
+                                      t.Value == sessionId, cancellationToken);
+
+        if (userToken == null)
         {
-            return Result<AuthResponse>.Failure("Невалидный Access Token.");
+            return Result.Failure("Сессия не найдена или уже неактивна.");
         }
 
-        var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier) 
-            ?? principal.FindFirst(JwtRegisteredClaimNames.Sub);
-
-        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
-        {
-            return Result<AuthResponse>.Failure("Невалидный токен.");
-        }
-
-        var appUser = await _dbContext.Users
-            .Include(u => u.RefreshTokens)
-            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
-
-        if (appUser == null)
-        {
-            return Result<AuthResponse>.Failure("Пользователь не найден.");
-        }
-
-        var existingRefreshToken = appUser.RefreshTokens
-            .FirstOrDefault(r => r.Token == request.RefreshToken);
-
-        if (existingRefreshToken == null || !existingRefreshToken.IsActive)
-        {
-            return Result<AuthResponse>.Failure("Невалидный или истекший Refresh Token.");
-        }
-
-        _dbContext.Set<RefreshToken>().Remove(existingRefreshToken);
-
-        return await GenerateAuthResponseAsync(appUser, existingRefreshToken.Id, cancellationToken);
-    }
-
-    public async Task<Result> RevokeTokenAsync(
-        string refreshToken, 
-        CancellationToken cancellationToken = default)
-    {
-        var tokenEntity = await _dbContext.Set<RefreshToken>()
-            .FirstOrDefaultAsync(r => r.Token == refreshToken, cancellationToken);
-
-        if (tokenEntity == null || !tokenEntity.IsActive)
-        {
-            return Result.Failure("Токен не найден или уже неактивен.");
-        }
-
-        tokenEntity.IsRevoked = true;
+        _dbContext.UserTokens.Remove(userToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
     }
 
-    private async Task<Result<AuthResponse>> GenerateAuthResponseAsync(
+    private async Task<Result<AuthResponse>> GenerateSessionResponseAsync(
         ApplicationUser appUser,
-        Guid? ignoreTokenId,
         CancellationToken cancellationToken)
     {
         var roles = await _userManager.GetRolesAsync(appUser);
         
-        var domainUser = appUser.ToDomain();
+        var sessionId = Guid.NewGuid().ToString("N");
 
-        var accessToken = _tokenService.GenerateAccessToken(domainUser, roles);
-        var refreshTokenValue = _tokenService.GenerateRefreshToken();
-
-        var refreshDays = Convert.ToDouble(_configuration["JwtSettings:RefreshTokenExpiryDays"] ?? "30");
-        var refreshTokenExpiresAt = DateTime.UtcNow.AddDays(refreshDays);
-
-        var expiredTokensQuery = _dbContext.Set<RefreshToken>()
-            .Where(t => t.UserId == appUser.Id && t.ExpiresAtUtc < DateTime.UtcNow);
-
-        if (ignoreTokenId.HasValue)
-        {
-            expiredTokensQuery = expiredTokensQuery.Where(t => t.Id != ignoreTokenId.Value);
-        }
-
-        var expiredTokens = await expiredTokensQuery.ToListAsync(cancellationToken);
-        _dbContext.Set<RefreshToken>().RemoveRange(expiredTokens);
-
-        var refreshToken = new RefreshToken
-        {
-            Token = refreshTokenValue,
-            UserId = appUser.Id,
-            ExpiresAtUtc = refreshTokenExpiresAt
-        };
-
-        _dbContext.Set<RefreshToken>().Add(refreshToken);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _userManager.SetAuthenticationTokenAsync(
+            appUser, 
+            SessionProvider, 
+            SessionTokenName, 
+            sessionId);
 
         return Result<AuthResponse>.Success(new AuthResponse(
-            UserId: domainUser.Id,
-            Email: domainUser.Email,
-            AccessToken: accessToken,
-            RefreshToken: refreshTokenValue,
-            RefreshTokenExpiresAtUtc: refreshTokenExpiresAt,
+            UserId: appUser.Id,
+            Email: appUser.Email ?? string.Empty,
+            SessionId: sessionId,
             Roles: roles
         ));
-    }
-
-    private ClaimsPrincipal? GetPrincipalFromExpiredToken(string token)
-    {
-        var secretKey = _configuration["JwtSettings:Secret"] 
-            ?? throw new InvalidOperationException("JWT Secret is not configured.");
-
-        var tokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateAudience = true,
-            ValidAudience = _configuration["JwtSettings:Audience"],
-            ValidateIssuer = true,
-            ValidIssuer = _configuration["JwtSettings:Issuer"],
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
-            ValidateLifetime = false
-        };
-
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out var securityToken);
-
-        if (securityToken is not JwtSecurityToken jwtSecurityToken ||
-            !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
-        {
-            return null;
-        }
-
-        return principal;
     }
 }
