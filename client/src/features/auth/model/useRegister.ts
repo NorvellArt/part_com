@@ -2,6 +2,7 @@
 
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import type { RegisterCredentialsDto } from '@/entities/session';
 import { fetchApi } from '@/shared';
 
@@ -16,8 +17,24 @@ export function useRegister() {
                 body: JSON.stringify(credentials),
             });
         },
-        onSuccess: () => {
-            router.push('/login?registered=true');
+        onSuccess: async (_data, variables) => {
+            try {
+                const result = await signIn('credentials', {
+                    email: variables.email,
+                    password: variables.password,
+                    redirect: false,
+                });
+
+                if (result?.error) {
+                    router.push('/login');
+                } else {
+                    router.push('/');
+                    router.refresh();
+                }
+            } catch (error) {
+                console.error('Ошибка автоматического входа после регистрации:', error);
+                router.push('/login');
+            }
         },
     });
 }

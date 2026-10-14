@@ -62,7 +62,8 @@ public static class ProductEndpoints
         .DisableAntiforgery()
         .Accepts<IFormFile>("multipart/form-data")
         .Produces(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status400BadRequest);
+        .Produces(StatusCodes.Status400BadRequest)
+        .RequireAuthorization();
     }
 
     private static async Task<IResult> SearchProducts(
