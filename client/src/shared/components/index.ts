@@ -9,5 +9,6 @@ export * from '@/shared/components/ui/textarea';
 export * from '@/shared/components/ui/pagination'
 export * from '@/shared/components/ui/alert'
 export * from '@/shared/components/ui/field'
+export * from '@/shared/components/ui/tabs'
 
 export { TruncatedFileName } from '@/shared/components/TruncatedFileName'

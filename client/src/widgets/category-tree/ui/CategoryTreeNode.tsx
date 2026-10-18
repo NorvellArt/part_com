@@ -1,13 +1,21 @@
 'use client';
 
 import { useState } from 'react';
+import {
+    ChevronDown,
+    ChevronRight,
+    FolderPlus,
+    Pencil,
+    Trash2,
+} from 'lucide-react';
 import { CategoryNode } from '@/entities/category/model/types';
+import { Button } from '@/shared/components';
 
 interface CategoryTreeNodeProps {
     node: CategoryNode;
     onAddChild: (parent: CategoryNode) => void;
     onEdit: (node: CategoryNode) => void;
-    onDelete: (id: string) => Promise<void>;
+    onDelete: (id: string) => void;
 }
 
 export function CategoryTreeNode({
@@ -20,53 +28,70 @@ export function CategoryTreeNode({
     const hasChildren = node.children && node.children.length > 0;
 
     return (
-        <div className="ml-4 my-2 border-l-2 border-gray-200 pl-4">
-            <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-md bg-white border border-gray-100 shadow-sm">
+        <div className="ml-4 my-1 border-l-2 border-slate-100 pl-4">
+            <div className="flex items-center justify-between p-2 hover:bg-slate-50/80 rounded-lg bg-white border border-slate-200/60 shadow-sm transition-colors group">
                 <div className="flex items-center gap-2">
-                    {hasChildren && (
-                        <button
+                    {hasChildren ? (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-5 w-5 text-slate-500 hover:text-slate-900"
                             onClick={() => setIsOpen(!isOpen)}
-                            className="text-gray-500 hover:text-black text-xs font-bold"
                         >
-                            {isOpen ? '▼' : '▶'}
-                        </button>
+                            {isOpen ? (
+                                <ChevronDown className="h-4 w-4" />
+                            ) : (
+                                <ChevronRight className="h-4 w-4" />
+                            )}
+                        </Button>
+                    ) : (
+                        <div className="w-5" />
                     )}
-                    <span className="font-medium text-gray-800">
+                    <span className="font-medium text-sm text-slate-800">
                         {node.name}
                     </span>
-                    <span className="text-xs text-gray-400">/{node.slug}</span>
+                    <span className="text-xs text-slate-400 select-all font-mono">
+                        /{node.slug}
+                    </span>
+                    <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">
+                        Lvl {node.level}
+                    </span>
                 </div>
 
-                <div className="flex gap-2">
-                    {/* FDD / Бизнес-требование: Запрет создания 4-го уровня (если уровень родителя >= 3) */}
-                    <button
-                        onClick={() => onAddChild(node)}
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 gap-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                         disabled={node.level >= 3}
-                        className={`text-xs px-2 py-1 rounded ${
-                            node.level >= 3
-                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                : 'bg-blue-600 text-white hover:bg-blue-700'
-                        }`}
+                        onClick={() => onAddChild(node)}
                     >
-                        + Подкатегория
-                    </button>
-                    <button
+                        <FolderPlus className="h-3.5 w-3.5" />
+                        <span className="text-xs">Подкатегория</span>
+                    </Button>
+
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
                         onClick={() => onEdit(node)}
-                        className="text-xs bg-amber-500 text-white px-2 py-1 rounded hover:bg-amber-600"
                     >
-                        Изменить
-                    </button>
-                    <button
+                        <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                         onClick={() => onDelete(node.id)}
-                        className="text-xs bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
                     >
-                        Удалить
-                    </button>
+                        <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                 </div>
             </div>
 
             {isOpen && hasChildren && (
-                <div className="mt-1">
+                <div className="mt-1 space-y-1">
                     {node.children.map((child) => (
                         <CategoryTreeNode
                             key={child.id}

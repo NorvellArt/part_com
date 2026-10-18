@@ -2,11 +2,21 @@
 
 import { useState, useEffect } from 'react';
 import { CategoryNode } from '@/entities/category/model/types';
+import {
+    Button,
+    Input,
+    Label,
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from '@/shared/components';
 
 interface CategoryFormModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (name: string, slug: string) => Promise<void>;
+    onSave: (name: string, slug: string) => void;
     editNode: CategoryNode | null;
     parentNode: CategoryNode | null;
 }
@@ -20,7 +30,6 @@ export function CategoryFormModal({
 }: CategoryFormModalProps) {
     const [name, setName] = useState('');
     const [slug, setSlug] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         if (editNode) {
@@ -44,48 +53,47 @@ export function CategoryFormModal({
         }
     };
 
-    const handleSubmit = async () => {
-        setIsSubmitting(true);
-        try {
-            await onSave(name, slug);
-            onClose();
-        } catch (err: any) {
-            alert(err.message);
-        } finally {
-            setIsSubmitting(false);
-        }
+    const handleSubmit = (e: React.SubmitEvent) => {
+        e.preventDefault();
+        if (!name.trim() || !slug.trim()) return;
+
+        onSave(name, slug);
     };
 
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg max-w-md w-full shadow-xl">
-                <h3 className="text-lg font-bold mb-4">
-                    {editNode
-                        ? `Редактировать: ${editNode.name}`
-                        : parentNode
-                          ? `Подкатегория для "${parentNode.name}"`
-                          : 'Новая корневая категория'}
-                </h3>
+        <Dialog
+            open={isOpen}
+            onOpenChange={(open) => !open && onClose()}
+        >
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle>
+                        {editNode
+                            ? `Редактировать: ${editNode.name}`
+                            : parentNode
+                              ? `Подкатегория для "${parentNode.name}"`
+                              : 'Новая корневая категория'}
+                    </DialogTitle>
+                </DialogHeader>
 
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Название
-                        </label>
-                        <input
+                <form
+                    onSubmit={handleSubmit}
+                    className="space-y-4 py-2"
+                >
+                    <div className="space-y-1">
+                        <Label htmlFor="category-name">Название</Label>
+                        <Input
+                            id="category-name"
                             type="text"
                             value={name}
                             onChange={handleNameChange}
-                            className="w-full border p-2 rounded-md focus:outline-blue-500"
+                            autoComplete="off"
                         />
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Slug (URL)
-                        </label>
-                        <input
+                    <div className="space-y-1">
+                        <Label htmlFor="category-slug">Slug (URL)</Label>
+                        <Input
+                            id="category-slug"
                             type="text"
                             value={slug}
                             onChange={(e) =>
@@ -95,28 +103,27 @@ export function CategoryFormModal({
                                         .replace(/\s+/g, '-'),
                                 )
                             }
-                            className="w-full border p-2 rounded-md focus:outline-blue-500"
+                            autoComplete="off"
                         />
                     </div>
-                </div>
 
-                <div className="flex justify-end gap-2 mt-6">
-                    <button
-                        onClick={onClose}
-                        className="px-4 py-2 border rounded-md hover:bg-gray-100"
-                        disabled={isSubmitting}
-                    >
-                        Отмена
-                    </button>
-                    <button
-                        onClick={handleSubmit}
-                        disabled={!name.trim() || !slug.trim() || isSubmitting}
-                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
-                    >
-                        {isSubmitting ? 'Сохранение...' : 'Сохранить'}
-                    </button>
-                </div>
-            </div>
-        </div>
+                    <DialogFooter className="pt-4">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={onClose}
+                        >
+                            Отмена
+                        </Button>
+                        <Button
+                            type="submit"
+                            disabled={!name.trim() || !slug.trim()}
+                        >
+                            Сохранить
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
     );
 }

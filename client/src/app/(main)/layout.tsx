@@ -5,6 +5,7 @@ import { buttonVariants } from '@/shared/components';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/entities/session';
 import { LogoutButton } from '@/features/auth/ui/LogoutButton';
+import { ShieldCheck } from 'lucide-react';
 
 export default async function MainLayout({
     children,
@@ -12,6 +13,7 @@ export default async function MainLayout({
     children: React.ReactNode;
 }>) {
     const session = await getServerSession(authOptions);
+    const isAdmin = session?.user?.roles?.includes('ADMIN');
 
     return (
         <>
@@ -37,6 +39,20 @@ export default async function MainLayout({
                     <div className="flex items-center gap-2 shrink-0">
                         {session?.user ? (
                             <>
+                                {isAdmin && (
+                                    <Link
+                                        href="/admin"
+                                        className={buttonVariants({
+                                            variant: 'outline',
+                                            size: 'sm',
+                                            className:
+                                                'gap-1.5 border-slate-200 text-slate-700 hover:bg-slate-50',
+                                        })}
+                                    >
+                                        <ShieldCheck className="h-4 w-4 text-blue-600" />
+                                        Администрирование
+                                    </Link>
+                                )}
                                 <span className="text-sm font-medium text-slate-700 px-3 py-1">
                                     {session.user.email}
                                 </span>
