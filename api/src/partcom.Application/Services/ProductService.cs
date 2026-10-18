@@ -8,10 +8,12 @@ using partcom.Domain.Interfaces;
 
 public class ProductService(
     IProductRepository productRepository,
+    ICategoryRepository categoryRepository,
     IExcelProductParser excelParser
     ) : IProductService
 {
     private readonly IProductRepository _productRepository = productRepository;
+    private readonly ICategoryRepository _categoryRepository = categoryRepository;
     private readonly IExcelProductParser _excelParser = excelParser;
 
     public async Task<ProductDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -59,25 +61,18 @@ public class ProductService(
 
     public async Task<PagedResult<ProductDto>> SearchAsync(
     string? query,
+    string? categorySlug,
     int page = 1,
     int pageSize = 20,
     CancellationToken cancellationToken = default)
     {
         page = page < 1 ? 1 : page;
         pageSize = pageSize < 1 ? 20 : (pageSize > 100 ? 100 : pageSize);
-        
-        var pagedProducts = await _productRepository.SearchAsync(query, page, pageSize, cancellationToken);
+
+        var pagedProducts = await _productRepository.SearchAsync(query, categorySlug, page, pageSize, cancellationToken);
 
         var dtos = pagedProducts.Items
-            .Select(p => new ProductDto(
-                p.Id,
-                p.Brand,
-                p.ItemNumber,
-                p.Name,
-                p.Price,
-                p.Quantity,
-                p.ImageUrl
-            ))
+            .Select(MapToDto)
             .ToList();
 
         return new PagedResult<ProductDto>(
@@ -157,14 +152,36 @@ public class ProductService(
         return (productsToAdd.Count, productsToUpdate.Count);
     }
 
+    public async Task<bool> AssignCategoryAsync(Guid productId, Guid? categoryId, CancellationToken cancellationToken = default)
+    {
+        var product = await _productRepository.GetByIdAsync(productId, cancellationToken);
+        if (product is null) return false;
+
+        if (categoryId == null)
+        {
+            product.AssignCategory(null);
+        }
+        else
+        {
+            var category = await _categoryRepository.GetByIdAsync(categoryId.Value, cancellationToken) ?? throw new ArgumentException("Категория не найдена");
+            product.AssignCategory(category);
+        }
+
+        await _productRepository.UpdateAsync(product, cancellationToken);
+        await _productRepository.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
     private static ProductDto MapToDto(Product product) =>
-        new(
-            product.Id,
-            product.Brand,
-            product.ItemNumber,
-            product.Name,
-            product.Price,
-            product.Quantity,
-            product.ImageUrl
-        );
+    new(
+        product.Id,
+        product.Brand,
+        product.ItemNumber,
+        product.Name,
+        product.Price,
+        product.Quantity,
+        product.ImageUrl,
+        product.CategoryId,
+        product.Category?.Name
+    );
 }

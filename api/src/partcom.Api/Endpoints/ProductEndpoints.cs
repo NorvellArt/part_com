@@ -2,6 +2,11 @@ namespace partcom.Api.Endpoints;
 
 using partcom.Application.DTOs;
 using partcom.Application.Interfaces;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
+using partcom.Domain.Common;
 
 public static class ProductEndpoints
 {
@@ -35,7 +40,33 @@ public static class ProductEndpoints
         });
 
         group.MapGet("/search", SearchProducts)
-             .Produces<IReadOnlyCollection<ProductDto>>(StatusCodes.Status200OK);
+             .Produces<PagedResult<ProductDto>>(StatusCodes.Status200OK);
+
+        group.MapPut("/{id:guid}/assign-category", async (
+            Guid id,
+            [FromBody] AssignCategoryRequest request,
+            IProductService productService,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var success = await productService.AssignCategoryAsync(id, request.CategoryId, ct);
+                return success ? Results.NoContent() : Results.NotFound();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Results.BadRequest(new { error = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.BadRequest(new { error = ex.Message });
+            }
+        })
+        .WithName("AssignProductCategory")
+        .Produces(StatusCodes.Status204NoContent)
+        .Produces(StatusCodes.Status400BadRequest)
+        .Produces(StatusCodes.Status404NotFound)
+        .RequireAuthorization();
 
         group.MapPost("/import", async (IFormFile file, IProductService productService, CancellationToken ct) =>
         {
@@ -67,13 +98,16 @@ public static class ProductEndpoints
     }
 
     private static async Task<IResult> SearchProducts(
-        string? query,
-        int page = 1,
-        int pageSize = 20,
+        [FromQuery] string? query,
+        [FromQuery] string? categorySlug,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
         IProductService productService = null!,
         CancellationToken ct = default)
     {
-        var result = await productService.SearchAsync(query, page, pageSize, ct);
+        var result = await productService.SearchAsync(query, categorySlug, page, pageSize, ct);
         return Results.Ok(result);
     }
 }
+
+public record AssignCategoryRequest(Guid? CategoryId);

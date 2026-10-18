@@ -7,7 +7,9 @@ public record ProductDto(
     string Name,
     decimal Price,
     int Quantity,
-    string? ImageUrl
+    string? ImageUrl,
+    Guid? CategoryId,
+    string? CategoryName
 );
 
 public record CreateProductDto(

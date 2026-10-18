@@ -15,6 +15,7 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
     public async Task<Product?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
         var entity = await _context.Products
+            .Include(p => p.Category)
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == id, ct);
 
@@ -30,7 +31,9 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
             return [];
         }
 
-        var query = _context.Set<ProductEntity>().AsQueryable();
+        var query = _context.Set<ProductEntity>()
+            .Include(p => p.Category)
+            .AsQueryable();
         var parameter = Expression.Parameter(typeof(ProductEntity), "p");
         Expression? combinedExpression = null;
 
@@ -70,7 +73,9 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
         return [.. dbEntities.Select(MapToDomain)];
     }
 
-    public async Task<PagedResult<Product>> SearchAsync(string? query,
+    public async Task<PagedResult<Product>> SearchAsync(
+        string? query,
+        string? categorySlug,
         int page = 1,
         int pageSize = 20,
         CancellationToken ct = default)
@@ -78,7 +83,42 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 100);
 
-        var dbQuery = _context.Products.AsNoTracking();
+        var dbQuery = _context.Products.Include(p => p.Category).AsNoTracking().AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(categorySlug))
+        {
+            var targetCategory = await _context.Categories
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Slug == categorySlug.ToLowerInvariant(), ct);
+
+            if (targetCategory != null)
+            {
+                List<Guid> allowedCategoryIds = [targetCategory.Id];
+
+                if (targetCategory.Level == 1)
+                {
+                    var subIds = await _context.Categories
+                        .AsNoTracking()
+                        .Where(c => c.ParentId == targetCategory.Id || c.Parent!.ParentId == targetCategory.Id)
+                        .Select(c => c.Id)
+                        .ToListAsync(ct);
+
+                    allowedCategoryIds.AddRange(subIds);
+                }
+                else if (targetCategory.Level == 2)
+                {
+                    var subIds = await _context.Categories
+                        .AsNoTracking()
+                        .Where(c => c.ParentId == targetCategory.Id)
+                        .Select(c => c.Id)
+                        .ToListAsync(ct);
+
+                    allowedCategoryIds.AddRange(subIds);
+                }
+
+                dbQuery = dbQuery.Where(p => p.CategoryId.HasValue && allowedCategoryIds.Contains(p.CategoryId.Value));
+            }
+        }
 
         if (string.IsNullOrWhiteSpace(query))
         {
@@ -166,12 +206,7 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
 
             if (trackedEntity != null)
             {
-                trackedEntity.Brand = product.Brand;
-                trackedEntity.ItemNumber = product.ItemNumber;
-                trackedEntity.Name = product.Name;
-                trackedEntity.Price = product.Price;
-                trackedEntity.Quantity = product.Quantity;
-                trackedEntity.ImageUrl = product.ImageUrl;
+                UpdateEntityFromDomain(trackedEntity, product);
             }
             else
             {
@@ -198,7 +233,11 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
 
     private static Product MapToDomain(ProductEntity entity)
     {
-        return new Product(
+        var domainCategory = entity.Category != null
+        ? Category.Reconstitute(entity.Category.Id, entity.Category.Name, entity.Category.Slug, entity.Category.ParentId, entity.Category.Level)
+        : null;
+
+        var product = new Product(
             id: entity.Id,
             brand: entity.Brand,
             itemNumber: entity.ItemNumber,
@@ -207,6 +246,13 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
             quantity: entity.Quantity,
             imageUrl: entity.ImageUrl
         );
+
+        if (domainCategory != null)
+        {
+            product.AssignCategory(domainCategory);
+        }
+
+        return product;
     }
 
     private static ProductEntity MapToEntity(Product product)
@@ -219,7 +265,9 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
             Name = product.Name,
             Price = product.Price,
             Quantity = product.Quantity,
-            ImageUrl = product.ImageUrl
+            ImageUrl = product.ImageUrl,
+
+            CategoryId = product.CategoryId,
         };
     }
 
@@ -231,5 +279,6 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
         entity.Price = product.Price;
         entity.Quantity = product.Quantity;
         entity.ImageUrl = product.ImageUrl;
+        entity.CategoryId = product.CategoryId;
     }
 }

@@ -11,6 +11,7 @@ public interface IProductRepository
         CancellationToken cancellationToken = default);
     Task<PagedResult<Product>> SearchAsync(
         string? query,
+        string? categorySlug,
         int page = 1,
         int pageSize = 20,
         CancellationToken ct = default

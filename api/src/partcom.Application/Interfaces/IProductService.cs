@@ -11,9 +11,11 @@ public interface IProductService
     Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
     Task<PagedResult<ProductDto>> SearchAsync(
     string? query,
+    string? categorySlug,
     int page = 1,
     int pageSize = 20,
     CancellationToken cancellationToken = default);
 
     Task<(int InsertedCount, int UpdatedCount)> ImportFromExcelAsync(Stream fileStream, CancellationToken cancellationToken = default);
+    Task<bool> AssignCategoryAsync(Guid productId, Guid? categoryId, CancellationToken cancellationToken = default);
 }

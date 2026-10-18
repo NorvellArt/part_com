@@ -5,27 +5,37 @@ using Microsoft.EntityFrameworkCore;
 
 namespace partcom.Infrastructure.Persistence;
 
-public class ProductEntity
-{
-    public Guid Id { get; set; }
-    public string Brand { get; set; } = string.Empty;
-    public string ItemNumber { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public decimal Price { get; set; }
-    public int Quantity { get; set; }
-    public string? ImageUrl { get; set; }
-}
-
 public class AppDbContext(DbContextOptions<AppDbContext> options)
     : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options)
 {
     public DbSet<ProductEntity> Products => Set<ProductEntity>();
+    public DbSet<CategoryEntity> Categories => Set<CategoryEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.HasPostgresExtension("pg_trgm");
+
+        modelBuilder.Entity<CategoryEntity>(entity =>
+        {
+            entity.ToTable("Categories");
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.Slug).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.Level).IsRequired();
+
+            entity.HasIndex(e => e.Slug).IsUnique();
+
+            entity.HasOne(e => e.Parent)
+                  .WithMany(e => e.Children)
+                  .HasForeignKey(e => e.ParentId)
+                  .OnDelete(DeleteBehavior.Restrict)
+                  .IsRequired(false);
+
+            entity.HasIndex(e => e.ParentId);
+        });
 
         modelBuilder.Entity<ProductEntity>(entity =>
         {
@@ -36,6 +46,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             entity.Property(e => e.ItemNumber).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
             entity.Property(e => e.Price).HasPrecision(18, 2);
+
+            entity.HasOne(e => e.Category)
+                  .WithMany(c => c.Products)
+                  .HasForeignKey(e => e.CategoryId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(e => e.CategoryId);
 
             entity.HasIndex(e => new { e.ItemNumber, e.Brand }, "IX_Products_Lower_ItemNumber_Brand");
 

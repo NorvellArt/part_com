@@ -10,6 +10,11 @@ public class Product
     public int Quantity { get; set; }
     public string? ImageUrl { get; private set; }
 
+    public Guid? CategoryId { get; private set; }
+    public Category? Category { get; private set; } = null!;
+
+    private Product() { }
+
     public Product(string brand, string itemNumber, string name, decimal price, int quantity, string? imageUrl = null)
     {
         Id = Guid.NewGuid();
@@ -45,5 +50,23 @@ public class Product
         Price = price;
         Quantity = quantity;
         ImageUrl = imageUrl;
+    }
+
+    public void AssignCategory(Category? category)
+    {
+        if (category == null)
+        {
+            Category = null;
+            CategoryId = null;
+            return;
+        }
+
+        if (category.Level != 3)
+        {
+            throw new InvalidOperationException($"Товар можно привязать только к категории 3-го уровня. Выбранная категория '{category.Name}' имеет уровень {category.Level}.");
+        }
+
+        Category = category;
+        CategoryId = category.Id;
     }
 }
