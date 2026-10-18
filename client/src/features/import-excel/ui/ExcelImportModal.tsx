@@ -19,7 +19,7 @@ import {
     Loader2,
     X,
 } from 'lucide-react';
-import { useImportExcel } from '@/features/import-excel';
+import { useImportExcel } from '../api/importExcelApi';
 
 interface ExcelImportModalProps {
     isOpen: boolean;

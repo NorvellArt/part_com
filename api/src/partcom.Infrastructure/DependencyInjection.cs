@@ -51,6 +51,7 @@ public static class DependencyInjection
         services.AddScoped<IIdentityService, IdentityService>();
 
         services.AddScoped<IProductRepository, PostgresProductRepository>();
+        services.AddScoped<ICategoryRepository, PostgresCategoryRepository>();
         services.AddScoped<IExcelProductParser, ExcelProductParser>();
 
         return services;

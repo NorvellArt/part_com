@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using partcom.Api.Endpoints;
+using partcom.API.Endpoints;
 using partcom.Application;
 using partcom.Infrastructure;
 using partcom.Infrastructure.Identity;
@@ -40,5 +41,6 @@ app.UseAuthorization();
 
 app.MapUserEndpoints();
 app.MapProductEndpoints();
+app.MapCategoryEndpoints();
 
 app.Run();
