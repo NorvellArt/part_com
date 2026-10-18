@@ -5,19 +5,29 @@ import { ExcelImportButton } from '@/features/import-excel';
 import { Pagination } from '@/features/pagination';
 
 interface CatalogContentProps {
+    categorySlug: string | null;
     query: string;
     page: number;
 }
 
 const PAGE_SIZE = 20;
 
-export async function CatalogContent({ query, page }: CatalogContentProps) {
+export async function CatalogContent({
+    categorySlug,
+    query,
+    page,
+}: CatalogContentProps) {
     const session = await getServerSession(authOptions);
-
     const isAdmin = session?.user?.roles?.includes('ADMIN');
 
-    const data = await productApi.search({ query, page, pageSize: PAGE_SIZE });
-    const totalPages = data.totalPages;
+    const productsData = await productApi.search({
+        query,
+        categorySlug: categorySlug ?? undefined,
+        page,
+        pageSize: PAGE_SIZE,
+    });
+
+    const totalPages = productsData.totalPages;
 
     const title = query
         ? `Результаты поиска по запросу «${query}»`
@@ -26,20 +36,20 @@ export async function CatalogContent({ query, page }: CatalogContentProps) {
     return (
         <div className="space-y-6 pb-16 relative">
             <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold">{title}</h1>
+                <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
                 {isAdmin && <ExcelImportButton />}
             </div>
 
-            {data.totalCount === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
+            {productsData.totalCount === 0 ? (
+                <div className="text-center py-12 text-muted-foreground border border-dashed rounded-xl bg-slate-50/50">
                     {query
                         ? 'По вашему запросу ничего не найдено.'
-                        : 'Товары не найдены. Импортируйте каталог из Excel.'}
+                        : 'Товары не найдены в данной категории. Импортируйте каталог из Excel.'}
                 </div>
             ) : (
                 <>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                        {data.items.map((product) => (
+                        {productsData.items.map((product) => (
                             <ProductCard
                                 key={product.id}
                                 product={product}

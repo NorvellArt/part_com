@@ -6,6 +6,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/entities/session';
 import { LogoutButton } from '@/features/auth/ui/LogoutButton';
 import { ShieldCheck } from 'lucide-react';
+import { HeaderCatalogDropdown } from '@/widgets/header-catalog-dropdown';
 
 export default async function MainLayout({
     children,
@@ -25,6 +26,10 @@ export default async function MainLayout({
                     >
                         NAME
                     </Link>
+
+                    <div className="shrink-0">
+                        <HeaderCatalogDropdown />
+                    </div>
 
                     <div className="flex-1 max-w-md mx-auto flex justify-center">
                         <Suspense

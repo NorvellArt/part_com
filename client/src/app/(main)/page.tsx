@@ -1,30 +1,21 @@
-import { Suspense } from 'react';
-import { CatalogContent } from '@/widgets/product-catalog/CatalogContent';
+import { redirect } from 'next/navigation';
 
 interface PageProps {
     searchParams: Promise<{ q?: string; page?: string }>;
 }
 
-export default async function CatalogPage({ searchParams }: PageProps) {
-    const resolvedParams = await searchParams;
-    const query = resolvedParams.q ?? '';
-    const page = Number(resolvedParams.page) || 1;
+export default async function IndexPage({ searchParams }: PageProps) {
+    const resolvedSearchParams = await searchParams;
+    const params = new URLSearchParams();
 
-    return (
-        <div className="w-full py-2">
-            <Suspense
-                key={`${query}-${page}`}
-                fallback={
-                    <div className="text-center py-12 text-muted-foreground">
-                        Загрузка каталога автозапчастей...
-                    </div>
-                }
-            >
-                <CatalogContent
-                    query={query}
-                    page={page}
-                />
-            </Suspense>
-        </div>
-    );
+    if (resolvedSearchParams.q) {
+        params.set('q', resolvedSearchParams.q);
+    }
+    if (resolvedSearchParams.page) {
+        params.set('page', resolvedSearchParams.page);
+    }
+
+    const queryString = params.toString();
+    
+    redirect(queryString ? `/catalog?${queryString}` : '/catalog');
 }

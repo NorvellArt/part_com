@@ -17,9 +17,12 @@ export const productKeys = {
 };
 
 export const productApi = {
-    search: async ({ query, page = 1, pageSize = 20 }: ProductSearchParams, signal?: AbortSignal) => {
+    search: async ({ query, categorySlug, page = 1, pageSize = 20 }: ProductSearchParams, signal?: AbortSignal) => {
         const params = new URLSearchParams();
+
         if (query) params.set('query', query);
+        if (categorySlug) params.set('categorySlug', categorySlug);
+
         params.set('page', page.toString());
         params.set('pageSize', pageSize.toString());
 

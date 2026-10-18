@@ -10,5 +10,9 @@ export * from '@/shared/components/ui/pagination'
 export * from '@/shared/components/ui/alert'
 export * from '@/shared/components/ui/field'
 export * from '@/shared/components/ui/tabs'
+export * from '@/shared/components/ui/popover'
+export * from '@/shared/components/ui/scroll-area'
+export * from '@/shared/components/ui/separator'
+
 
 export { TruncatedFileName } from '@/shared/components/TruncatedFileName'
