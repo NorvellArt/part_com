@@ -4,6 +4,7 @@ import { authOptions } from '@/entities/session';
 import { CategoryTree } from '@/widgets/category-tree/ui/CategoryTree';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components';
 import { FolderTree, FileSpreadsheet, Settings } from 'lucide-react';
+import { ProductModerationTable } from '@/widgets/product-moderation';
 
 export default async function AdminDashboardPage() {
     const session = await getServerSession(authOptions);
@@ -58,10 +59,7 @@ export default async function AdminDashboardPage() {
                     value="products"
                     className="border-none p-0 outline-none"
                 >
-                    <div className="bg-white p-6 rounded-xl border border-slate-200 text-center py-12 text-slate-400 text-sm">
-                        Здесь будет таблица ручной модерации и распределения
-                        товаров, импортированных из Excel таблиц.
-                    </div>
+                    <ProductModerationTable />
                 </TabsContent>
 
                 <TabsContent

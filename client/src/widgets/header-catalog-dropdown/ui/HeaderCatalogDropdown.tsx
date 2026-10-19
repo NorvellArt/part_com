@@ -47,7 +47,7 @@ export function HeaderCatalogDropdown() {
             <PopoverContent
                 align="start"
                 sideOffset={12}
-                className="w-[calc(100vw-2rem)] max-w-7xl p-0 border border-slate-200/80 rounded-2xl shadow-xl overflow-hidden bg-white z-50"
+                className="w-[100%] p-0 border border-slate-200/80 rounded-2xl shadow-xl overflow-hidden bg-white z-50"
             >
                 {isLoading ? (
                     <div className="p-12 text-center text-xs text-slate-400 font-medium">

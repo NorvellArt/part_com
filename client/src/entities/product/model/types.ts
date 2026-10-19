@@ -6,6 +6,9 @@ export interface Product {
     price: number;
     quantity: number;
     imageUrl?: string | null;
+
+    categoryId: string | null;
+    categoryName: string | null;
 }
 
 export type CreateProductInput = Omit<Product, 'id'>;

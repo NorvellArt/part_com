@@ -13,6 +13,7 @@ export * from '@/shared/components/ui/tabs'
 export * from '@/shared/components/ui/popover'
 export * from '@/shared/components/ui/scroll-area'
 export * from '@/shared/components/ui/separator'
-
+export * from '@/shared/components/ui/select'
+export * from '@/shared/components/ui/table'
 
 export { TruncatedFileName } from '@/shared/components/TruncatedFileName'
