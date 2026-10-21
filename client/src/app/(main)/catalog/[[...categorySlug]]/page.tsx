@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import { CatalogContent } from '@/widgets/product-catalog/CatalogContent';
+import { Breadcrumbs } from '@/features/breadcrumbs';
 
 interface PageProps {
     params: Promise<{ categorySlug?: string[] }>;
@@ -17,7 +18,9 @@ export default async function CatalogPage({ params, searchParams }: PageProps) {
     const page = Number(resolvedSearchParams.page) || 1;
 
     return (
-        <div className="w-full py-2">
+        <div className="w-full py-2 space-y-2">
+            {slugs.length > 0 && <Breadcrumbs slugs={slugs} />}
+
             <Suspense
                 key={`${activeCategorySlug}-${query}-${page}`}
                 fallback={

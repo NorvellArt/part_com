@@ -15,5 +15,6 @@ export * from '@/shared/components/ui/scroll-area'
 export * from '@/shared/components/ui/separator'
 export * from '@/shared/components/ui/select'
 export * from '@/shared/components/ui/table'
+export * from '@/shared/components/ui/breadcrumb'
 
 export { TruncatedFileName } from '@/shared/components/TruncatedFileName'
