@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Search } from 'lucide-react';
 import { Input, Button } from '@/shared/components';
+import { ExcelImportButton } from '@/features/import-excel';
 
 interface ModerationToolbarProps {
     totalCount: number;
@@ -43,8 +44,13 @@ export function ModerationToolbar({
                     Найти
                 </Button>
             </form>
-            <div className="text-xs font-medium text-slate-400">
-                Всего позиций: {totalCount}
+
+            <div className="flex items-center gap-4"> 
+                <div className="text-xs font-medium text-slate-400">
+                    Всего позиций: {totalCount}
+                </div>
+
+                <ExcelImportButton />
             </div>
         </div>
     );

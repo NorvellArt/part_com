@@ -1,7 +1,4 @@
-import { getServerSession } from 'next-auth';
 import { ProductCard, productApi } from '@/entities/product';
-import { authOptions } from '@/entities/session';
-import { ExcelImportButton } from '@/features/import-excel';
 import { Pagination } from '@/features/pagination';
 
 interface CatalogContentProps {
@@ -17,9 +14,6 @@ export async function CatalogContent({
     query,
     page,
 }: CatalogContentProps) {
-    const session = await getServerSession(authOptions);
-    const isAdmin = session?.user?.roles?.includes('ADMIN');
-
     const productsData = await productApi.search({
         query,
         categorySlug: categorySlug ?? undefined,
@@ -29,16 +23,15 @@ export async function CatalogContent({
 
     const totalPages = productsData.totalPages;
 
-    const title = query
-        ? `Результаты поиска по запросу «${query}»`
-        : 'Каталог автозапчастей';
-
     return (
         <div className="space-y-6 pb-16 relative">
-            <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-                {isAdmin && <ExcelImportButton />}
-            </div>
+            {query && (
+                <div className="flex justify-between items-center">
+                    <h1 className="text-m font-bold tracking-tight">
+                        {`Результаты поиска по запросу «${query}»`}
+                    </h1>
+                </div>
+            )}
 
             {productsData.totalCount === 0 ? (
                 <div className="text-center py-12 text-muted-foreground border border-dashed rounded-xl bg-slate-50/50">

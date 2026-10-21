@@ -14,11 +14,6 @@ export default async function AdminDashboardPage() {
 
     return (
         <div className="space-y-6 min-h-screen pb-12">
-            <div>
-                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-                    Панель управления администратора
-                </h1>
-            </div>
 
             <Tabs
                 defaultValue="categories"

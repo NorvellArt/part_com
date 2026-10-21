@@ -22,9 +22,10 @@ export default async function MainLayout({
                 <div className="mx-auto max-w-7xl px-4 h-16 flex items-center justify-between gap-4">
                     <Link
                         href="/"
-                        className="font-bold text-lg text-slate-900 tracking-tight shrink-0"
+                        className="font-medium text-lg tracking-tight shrink-0 text-slate-900"
                     >
-                        NAME
+                        <span>hdmarket</span>
+                        <span className="font-bold text-amber-600">52</span>
                     </Link>
 
                     <div className="shrink-0">
