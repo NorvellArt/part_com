@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition, useEffect, useRef } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useDebouncedCallback } from 'use-debounce';
 import {
     InputGroup,
@@ -13,6 +13,7 @@ import { Search, Loader2, X } from 'lucide-react';
 
 export function HeaderSearch() {
     const router = useRouter();
+    const pathname = usePathname();
     const searchParams = useSearchParams();
     const [isPending, startTransition] = useTransition();
 
@@ -27,9 +28,7 @@ export function HeaderSearch() {
         }
     }, [queryInUrl]);
 
-    const targetPath = '/';
-
-    const handleSearch = useDebouncedCallback((term: string) => {
+    const getTargetUrl = (term: string) => {
         const params = new URLSearchParams(searchParams.toString());
         const trimmed = term.trim();
 
@@ -40,9 +39,11 @@ export function HeaderSearch() {
         }
 
         const queryString = params.toString();
-        const targetUrl = queryString
-            ? `${targetPath}?${queryString}`
-            : targetPath;
+        return queryString ? `${pathname}?${queryString}` : pathname;
+    };
+
+    const handleSearch = useDebouncedCallback((term: string) => {
+        const targetUrl = getTargetUrl(term);
 
         startTransition(() => {
             router.push(targetUrl, { scroll: false });
@@ -59,13 +60,7 @@ export function HeaderSearch() {
         handleSearch.cancel();
         setValue('');
 
-        const params = new URLSearchParams(searchParams.toString());
-        params.delete('q');
-
-        const queryString = params.toString();
-        const targetUrl = queryString
-            ? `${targetPath}?${queryString}`
-            : targetPath;
+        const targetUrl = getTargetUrl('');
 
         startTransition(() => {
             router.push(targetUrl, { scroll: false });
