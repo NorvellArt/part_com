@@ -163,13 +163,41 @@ public class ProductService(
         }
         else
         {
-            var category = await _categoryRepository.GetByIdAsync(categoryId.Value, cancellationToken) ?? throw new ArgumentException("Категория не найдена");
+            var category = await _categoryRepository.GetByIdAsync(categoryId.Value, cancellationToken)
+                ?? throw new ArgumentException("Категория не найдена");
             product.AssignCategory(category);
         }
 
         await _productRepository.UpdateAsync(product, cancellationToken);
         await _productRepository.SaveChangesAsync(cancellationToken);
         return true;
+    }
+
+    public async Task BulkAssignCategoryAsync(
+        IEnumerable<Guid> productIds,
+        Guid? categoryId,
+        CancellationToken cancellationToken)
+    {
+        if (productIds == null || !productIds.Any())
+        {
+            return;
+        }
+
+        var products = await _productRepository.GetByIdsAsync(productIds, cancellationToken);
+        Category? category = null;
+        if (categoryId.HasValue)
+        {
+            category = await _categoryRepository.GetByIdAsync(categoryId.Value, cancellationToken)
+                    ?? throw new ArgumentException("Категория не найдена");
+        }
+
+        foreach (var product in products)
+        {
+            product.AssignCategory(category);
+        }
+
+        await _productRepository.UpdateRangeAsync(products, cancellationToken);
+        await _productRepository.SaveChangesAsync(cancellationToken);
     }
 
     private static ProductDto MapToDto(Product product) =>

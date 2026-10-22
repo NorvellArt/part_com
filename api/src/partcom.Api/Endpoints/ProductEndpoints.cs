@@ -95,6 +95,8 @@ public static class ProductEndpoints
         .Produces(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status400BadRequest)
         .RequireAuthorization();
+
+        group.MapPut("/bulk-assign-category", BulkAssignCategoryAsync);
     }
 
     private static async Task<IResult> SearchProducts(
@@ -108,6 +110,22 @@ public static class ProductEndpoints
         var result = await productService.SearchAsync(query, categorySlug, page, pageSize, ct);
         return Results.Ok(result);
     }
+
+    private static async Task<IResult> BulkAssignCategoryAsync(
+        [FromBody] BulkAssignCategoryRequest request,
+        [FromServices] IProductService productService,
+        CancellationToken cancellationToken)
+    {
+        if (request.ProductIds == null || !request.ProductIds.Any())
+        {
+            return Results.BadRequest("Список идентификаторов товаров (ProductIds) не может быть пустым.");
+        }
+
+        await productService.BulkAssignCategoryAsync(request.ProductIds, request.CategoryId, cancellationToken);
+
+        return Results.NoContent();
+    }
 }
 
 public record AssignCategoryRequest(Guid? CategoryId);
+public record BulkAssignCategoryRequest(IEnumerable<Guid> ProductIds, Guid? CategoryId);

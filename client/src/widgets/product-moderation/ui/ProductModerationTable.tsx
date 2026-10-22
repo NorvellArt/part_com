@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useProducts } from '@/entities/product';
 import {
@@ -10,6 +10,7 @@ import {
     TableHead,
     TableHeader,
     TableRow,
+    Checkbox,
 } from '@/shared/components';
 import { PackageOpen, Loader2 } from 'lucide-react';
 import { ModerationToolbar } from './ModerationToolbar';
@@ -22,6 +23,7 @@ export function ProductModerationTable() {
     const pageFromUrl = Number(searchParams.get('page')) || 1;
 
     const [debouncedQuery, setDebouncedQuery] = useState('');
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
     const { data: pagedResult, isLoading } = useProducts({
         query: debouncedQuery || undefined,
@@ -29,23 +31,61 @@ export function ProductModerationTable() {
         pageSize: 10,
     });
 
+    useEffect(() => {
+        setSelectedIds([]);
+    }, [pageFromUrl, debouncedQuery]);
+
     const handleSearch = (query: string) => {
         setDebouncedQuery(query);
     };
 
+    const items = pagedResult?.items ?? [];
     const totalPages = pagedResult?.totalPages ?? 1;
+
+    const isAllSelected =
+        items.length > 0 &&
+        items.every((item) => selectedIds.includes(item.id));
+    const isSomeSelected =
+        items.length > 0 &&
+        items.some((item) => selectedIds.includes(item.id)) &&
+        !isAllSelected;
+
+    const handleSelectAll = () => {
+        if (isAllSelected) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(items.map((item) => item.id));
+        }
+    };
+
+    const handleSelectRow = (id: string) => {
+        setSelectedIds((prev) =>
+            prev.includes(id)
+                ? prev.filter((item) => item !== id)
+                : [...prev, id],
+        );
+    };
 
     return (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
             <ModerationToolbar
                 totalCount={pagedResult?.totalCount ?? 0}
                 onSearch={handleSearch}
+                selectedIds={selectedIds}
+                onClearSelection={() => setSelectedIds([])}
             />
 
             <div className="w-full overflow-auto">
                 <Table>
                     <TableHeader className="bg-slate-50/40 text-[11px] uppercase tracking-wider font-semibold">
                         <TableRow>
+                            <TableHead className="h-11 w-12 px-4 text-center">
+                                <Checkbox
+                                    checked={isAllSelected}
+                                    indeterminate={isSomeSelected}
+                                    onCheckedChange={handleSelectAll}
+                                />
+                            </TableHead>
                             <TableHead className="h-11 px-4 text-slate-500">
                                 Артикул / Бренд
                             </TableHead>
@@ -57,9 +97,6 @@ export function ProductModerationTable() {
                             </TableHead>
                             <TableHead className="h-11 px-4 text-center text-slate-500">
                                 Остаток
-                            </TableHead>
-                            <TableHead className="h-11 px-4 pl-6 text-slate-500">
-                                Текущая категория Ур.3
                             </TableHead>
                         </TableRow>
                     </TableHeader>
@@ -78,7 +115,7 @@ export function ProductModerationTable() {
                                     </div>
                                 </TableCell>
                             </TableRow>
-                        ) : !pagedResult || pagedResult.items.length === 0 ? (
+                        ) : !pagedResult || items.length === 0 ? (
                             <TableRow className="hover:bg-transparent">
                                 <TableCell
                                     colSpan={5}
@@ -94,10 +131,14 @@ export function ProductModerationTable() {
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            pagedResult.items.map((product) => (
+                            items.map((product) => (
                                 <ModerationRow
                                     key={product.id}
                                     product={product}
+                                    isSelected={selectedIds.includes(
+                                        product.id,
+                                    )}
+                                    onSelect={() => handleSelectRow(product.id)}
                                 />
                             ))
                         )}

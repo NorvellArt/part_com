@@ -22,6 +22,20 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
         return entity is null ? null : MapToDomain(entity);
     }
 
+    public async Task<IEnumerable<Product>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default)
+    {
+        if (ids == null || !ids.Any())
+        {
+            return [];
+        }
+
+        var dbEntities = await _context.Products
+            .Where(p => ids.Contains(p.Id))
+            .ToListAsync(cancellationToken);
+
+        return [.. dbEntities.Select(MapToDomain)];
+    }
+
     public async Task<List<Product>> GetByCompositeKeysAsync(
     List<ProductCompositeKey> keys,
     CancellationToken cancellationToken = default)

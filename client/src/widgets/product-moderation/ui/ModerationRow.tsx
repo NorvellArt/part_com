@@ -1,19 +1,21 @@
 'use client';
 
 import { Product } from '@/entities/product/model/types';
-import { TableRow, TableCell } from '@/shared/components';
-import { CategoryAssignSelect } from '@/features/assign-product-category';
+import { TableRow, TableCell, Checkbox } from '@/shared/components';
 import { cn } from 'cn';
 
 interface ModerationRowProps {
     product: Product;
+    isSelected: boolean;
+    onSelect: () => void;
 }
 
-export function ModerationRow({ product }: ModerationRowProps) {
+export function ModerationRow({ product, isSelected, onSelect }: ModerationRowProps) {
     const hasNoCategory = !product.categoryId;
 
     return (
         <TableRow
+            onClick={ onSelect }
             className={cn(
                 'transition-colors',
                 hasNoCategory
@@ -21,6 +23,11 @@ export function ModerationRow({ product }: ModerationRowProps) {
                     : 'hover:bg-slate-50/50',
             )}
         >
+            <TableCell className="h-11 w-12 px-4 text-center">
+                <Checkbox
+                    checked={isSelected}
+                />
+            </TableCell>
             <TableCell className="py-3 px-4 font-mono">
                 <div className="font-bold text-slate-900">
                     {product.itemNumber}
@@ -51,13 +58,6 @@ export function ModerationRow({ product }: ModerationRowProps) {
                 >
                     {product.quantity} шт
                 </span>
-            </TableCell>
-            <TableCell className="py-3 px-4 pl-6">
-                <CategoryAssignSelect
-                    productId={product.id}
-                    currentCategoryId={product.categoryId}
-                    currentCategoryName={product.categoryName}
-                />
             </TableCell>
         </TableRow>
     );

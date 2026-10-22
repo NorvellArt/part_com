@@ -6,6 +6,7 @@ using partcom.Domain.Entities;
 public interface IProductRepository
 {
     Task<Product?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<IEnumerable<Product>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
     Task<List<Product>> GetByCompositeKeysAsync(
         List<ProductCompositeKey> keys,
         CancellationToken cancellationToken = default);

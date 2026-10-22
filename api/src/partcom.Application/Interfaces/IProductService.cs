@@ -18,4 +18,8 @@ public interface IProductService
 
     Task<(int InsertedCount, int UpdatedCount)> ImportFromExcelAsync(Stream fileStream, CancellationToken cancellationToken = default);
     Task<bool> AssignCategoryAsync(Guid productId, Guid? categoryId, CancellationToken cancellationToken = default);
+    Task BulkAssignCategoryAsync(
+        IEnumerable<Guid> productIds,
+        Guid? categoryId,
+        CancellationToken cancellationToken = default);
 }
