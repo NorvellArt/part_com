@@ -15,6 +15,7 @@ public interface IProductRepository
         string? categorySlug,
         int page = 1,
         int pageSize = 20,
+        bool? hasCategory = null,
         CancellationToken ct = default
     );
     Task AddAsync(Product product, CancellationToken cancellationToken = default);

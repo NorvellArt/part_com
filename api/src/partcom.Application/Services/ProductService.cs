@@ -64,12 +64,13 @@ public class ProductService(
     string? categorySlug,
     int page = 1,
     int pageSize = 20,
+    bool? hasCategory = null,
     CancellationToken cancellationToken = default)
     {
         page = page < 1 ? 1 : page;
         pageSize = pageSize < 1 ? 20 : (pageSize > 100 ? 100 : pageSize);
 
-        var pagedProducts = await _productRepository.SearchAsync(query, categorySlug, page, pageSize, cancellationToken);
+        var pagedProducts = await _productRepository.SearchAsync(query, categorySlug, page, pageSize, hasCategory, cancellationToken);
 
         var dtos = pagedProducts.Items
             .Select(MapToDto)

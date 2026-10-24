@@ -104,10 +104,11 @@ public static class ProductEndpoints
         [FromQuery] string? categorySlug,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
+        [FromQuery] bool? hasCategory = null,
         IProductService productService = null!,
         CancellationToken ct = default)
     {
-        var result = await productService.SearchAsync(query, categorySlug, page, pageSize, ct);
+        var result = await productService.SearchAsync(query, categorySlug, page, pageSize, hasCategory, ct);
         return Results.Ok(result);
     }
 

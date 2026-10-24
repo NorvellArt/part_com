@@ -14,6 +14,7 @@ public interface IProductService
     string? categorySlug,
     int page = 1,
     int pageSize = 20,
+    bool? hasCategory = null,
     CancellationToken cancellationToken = default);
 
     Task<(int InsertedCount, int UpdatedCount)> ImportFromExcelAsync(Stream fileStream, CancellationToken cancellationToken = default);

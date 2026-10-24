@@ -19,4 +19,5 @@ export interface ProductSearchParams {
     categorySlug?: string;
     page?: number;
     pageSize?: number;
+    hasCategory?: boolean;
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useProducts } from '@/entities/product';
 import {
     Table,
@@ -19,24 +19,79 @@ import { Pagination } from '@/features/pagination';
 
 export function ProductModerationTable() {
     const searchParams = useSearchParams();
+    const router = useRouter();
 
     const pageFromUrl = Number(searchParams.get('page')) || 1;
+    const queryFromUrl = searchParams.get('query') || '';
 
-    const [debouncedQuery, setDebouncedQuery] = useState('');
+    const hasCategoryFromUrl =
+        searchParams.get('hasCategory') ??
+        (searchParams.has('query') || searchParams.has('page')
+            ? 'all'
+            : 'false');
+
+    const [selectValue, setSelectValue] = useState(hasCategoryFromUrl);
+
+    useEffect(() => {
+        setSelectValue(hasCategoryFromUrl);
+    }, [hasCategoryFromUrl]);
+
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
+    const getHasCategoryApiValue = () => {
+        if (hasCategoryFromUrl === 'true') return true;
+        if (hasCategoryFromUrl === 'false') return false;
+        return undefined;
+    };
+
     const { data: pagedResult, isLoading } = useProducts({
-        query: debouncedQuery || undefined,
+        query: queryFromUrl || undefined,
         page: pageFromUrl,
         pageSize: 10,
+        hasCategory: getHasCategoryApiValue(),
     });
 
     useEffect(() => {
         setSelectedIds([]);
-    }, [pageFromUrl, debouncedQuery]);
+    }, [pageFromUrl, queryFromUrl, hasCategoryFromUrl]);
 
-    const handleSearch = (query: string) => {
-        setDebouncedQuery(query);
+    const updateUrlParams = (updates: {
+        query?: string;
+        hasCategory?: string;
+        page?: number;
+    }) => {
+        const params = new URLSearchParams(searchParams.toString());
+
+        const targetHasCategory =
+            updates.hasCategory !== undefined
+                ? updates.hasCategory
+                : selectValue;
+
+        if (targetHasCategory === 'all') {
+            params.delete('hasCategory');
+        } else {
+            params.set('hasCategory', targetHasCategory);
+        }
+
+        if (updates.query !== undefined) {
+            if (updates.query) {
+                params.set('query', updates.query);
+            } else {
+                params.delete('query');
+            }
+            params.set('page', '1');
+        }
+
+        if (updates.hasCategory !== undefined) {
+            setSelectValue(updates.hasCategory);
+            params.set('page', '1');
+        }
+
+        if (updates.page !== undefined) {
+            params.set('page', updates.page.toString());
+        }
+
+        router.push(`?${params.toString()}`);
     };
 
     const items = pagedResult?.items ?? [];
@@ -70,9 +125,13 @@ export function ProductModerationTable() {
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
             <ModerationToolbar
                 totalCount={pagedResult?.totalCount ?? 0}
-                onSearch={handleSearch}
                 selectedIds={selectedIds}
                 onClearSelection={() => setSelectedIds([])}
+                currentHasCategory={selectValue}
+                onHasCategoryChange={(val) =>
+                    updateUrlParams({ hasCategory: val })
+                }
+                onSearch={(q) => updateUrlParams({ query: q })}
             />
 
             <div className="w-full overflow-auto">
@@ -108,7 +167,7 @@ export function ProductModerationTable() {
                         {isLoading ? (
                             <TableRow className="hover:bg-transparent">
                                 <TableCell
-                                    colSpan={5}
+                                    colSpan={7}
                                     className="py-12"
                                 >
                                     <div className="flex items-center justify-center gap-2 text-slate-400 text-xs">
@@ -122,7 +181,7 @@ export function ProductModerationTable() {
                         ) : !pagedResult || items.length === 0 ? (
                             <TableRow className="hover:bg-transparent">
                                 <TableCell
-                                    colSpan={5}
+                                    colSpan={7}
                                     className="py-12 text-center text-slate-400"
                                 >
                                     <div className="flex flex-col items-center justify-center gap-2">

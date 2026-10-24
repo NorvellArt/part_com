@@ -92,6 +92,7 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
         string? categorySlug,
         int page = 1,
         int pageSize = 20,
+        bool? hasCategory = null,
         CancellationToken ct = default)
     {
         page = Math.Max(1, page);
@@ -134,6 +135,13 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
             }
         }
 
+        if (hasCategory.HasValue)
+        {
+            dbQuery = hasCategory.Value
+                ? dbQuery.Where(p => p.CategoryId != null)
+                : dbQuery.Where(p => p.CategoryId == null);
+        }
+
         if (string.IsNullOrWhiteSpace(query))
         {
             var totalCount = await dbQuery.CountAsync(ct);
@@ -152,7 +160,13 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
         }
 
         var cleanQuery = query.Trim();
-        var lowerQuery = cleanQuery.ToLower();
+        var escapedQuery = cleanQuery
+            .Replace("\\", "\\\\")
+            .Replace("%", "\\%")
+            .Replace("_", "\\_");
+
+        var wildCardQuery = $"%{escapedQuery}%";
+        const string escapeChar = "\\";
 
         var scoredQuery = dbQuery
             .Select(p => new
@@ -163,8 +177,8 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
                 IsExactArticle = EF.Functions.ILike(p.ItemNumber, cleanQuery)
             })
             .Where(x => x.IsExactArticle ||
-                        EF.Functions.ILike(x.Entity.ItemNumber, $"%{cleanQuery}%") ||
-                        EF.Functions.ILike(x.Entity.Name, $"%{cleanQuery}%") ||
+                        EF.Functions.ILike(x.Entity.ItemNumber, wildCardQuery, escapeChar) ||
+                        EF.Functions.ILike(x.Entity.Name, wildCardQuery, escapeChar) ||
                         x.NameScore > 0.2f ||
                         x.ArticleScore > 0.2f);
 
