@@ -1,8 +1,9 @@
 'use client';
 
 import { Product } from '@/entities/product/model/types';
-import { TableRow, TableCell, Checkbox } from '@/shared/components';
+import { TableRow, TableCell, Checkbox, } from '@/shared/components';
 import { cn } from 'cn';
+import { ProductEditButton } from '@/features/edit-product';
 
 interface ModerationRowProps {
     product: Product;
@@ -10,12 +11,16 @@ interface ModerationRowProps {
     onSelect: () => void;
 }
 
-export function ModerationRow({ product, isSelected, onSelect }: ModerationRowProps) {
+export function ModerationRow({
+    product,
+    isSelected,
+    onSelect,
+}: ModerationRowProps) {
     const hasNoCategory = !product.categoryId;
 
     return (
         <TableRow
-            onClick={ onSelect }
+            onClick={onSelect}
             className={cn(
                 'transition-colors',
                 hasNoCategory
@@ -24,9 +29,7 @@ export function ModerationRow({ product, isSelected, onSelect }: ModerationRowPr
             )}
         >
             <TableCell className="h-11 w-12 px-4 text-center">
-                <Checkbox
-                    checked={isSelected}
-                />
+                <Checkbox checked={isSelected} />
             </TableCell>
             <TableCell className="py-3 px-4 font-mono">
                 <div className="font-bold text-slate-900">
@@ -58,6 +61,12 @@ export function ModerationRow({ product, isSelected, onSelect }: ModerationRowPr
                 >
                     {product.quantity} шт
                 </span>
+            </TableCell>
+            <TableCell className="py-3 px-4 text-center font-medium text-slate-800">
+                {product.categoryName || '—'}
+            </TableCell>
+            <TableCell className="h-11 px-4 text-center w-12">
+                <ProductEditButton productId={product.id} />
             </TableCell>
         </TableRow>
     );

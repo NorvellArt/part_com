@@ -1,16 +1,13 @@
 'use client';
 
-import Link from 'next/link';
 import { useProduct, ProductImage } from '@/entities/product';
-import { Label, buttonVariants } from '@/shared/components';
-import { Edit } from 'lucide-react';
+import { Label } from '@/shared/components';
 
 interface ProductCardViewProps {
     productId: string;
-    isAdmin: boolean;
 }
 
-export function ProductCardView({ productId, isAdmin }: ProductCardViewProps) {
+export function ProductCardView({ productId }: ProductCardViewProps) {
     const { data: product, isError } = useProduct(productId);
 
     if (isError || !product)
@@ -34,19 +31,6 @@ export function ProductCardView({ productId, isAdmin }: ProductCardViewProps) {
                         | Бренд: {product.brand}
                     </p>
                 </div>
-
-                {isAdmin && (
-                    <Link
-                        href={`/products/${productId}/edit`}
-                        className={buttonVariants({
-                            variant: 'outline',
-                            size: 'sm',
-                            className: 'gap-2',
-                        })}
-                    >
-                        <Edit className="w-4 h-4" /> Редактировать
-                    </Link>
-                )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -7,7 +7,7 @@ import { Providers } from '@/app/providers';
 const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
 export const metadata: Metadata = {
-    title: 'NAME - Каталог деталей',
+    title: 'hdmarket52 - Каталог деталей',
     description: 'Каталог автозапчастей',
 };
 

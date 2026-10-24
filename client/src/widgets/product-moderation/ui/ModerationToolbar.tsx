@@ -27,20 +27,10 @@ export function ModerationToolbar({
         onSearch(searchQuery);
     };
 
-    const handleBulkDelete = () => {
-        if (
-            confirm(
-                `Вы уверены, что хотите удалить ${selectedIds.length} запчастей?`,
-            )
-        ) {
-            console.log('Удаление ID:', selectedIds);
-        }
-    };
-
     return (
         <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between gap-4 shrink-0 min-h-[68px]">
             {hasSelection ? (
-                <div className="flex items-center justify-between w-full animate-in fade-in slide-in-from-top-1 duration-200">
+                <div className="flex items-center gap-3 w-full animate-in fade-in slide-in-from-top-1 duration-200">
                     <div className="flex items-center gap-3">
                         <Button
                             type="button"
@@ -61,17 +51,6 @@ export function ModerationToolbar({
                             selectedIds={selectedIds}
                             onSuccessAction={onClearSelection}
                         />
-
-                        <Button
-                            type="button"
-                            variant="destructive"
-                            size="sm"
-                            onClick={handleBulkDelete}
-                            className="h-9 rounded-xl text-xs gap-2 px-3 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200"
-                        >
-                            <Trash2 className="h-3.5 w-3.5" />
-                            Удалить
-                        </Button>
                     </div>
                 </div>
             ) : (

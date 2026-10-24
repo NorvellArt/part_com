@@ -98,6 +98,10 @@ export function ProductModerationTable() {
                             <TableHead className="h-11 px-4 text-center text-slate-500">
                                 Остаток
                             </TableHead>
+                            <TableHead className="h-11 px-4 text-center text-slate-500">
+                                Категория
+                            </TableHead>
+                            <TableHead className="h-11 w-12 px-4 text-center text-slate-500" />
                         </TableRow>
                     </TableHeader>
                     <TableBody className="text-xs text-slate-700">

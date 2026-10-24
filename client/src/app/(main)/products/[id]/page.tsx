@@ -1,12 +1,10 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/entities/session';
 import {
     dehydrate,
     HydrationBoundary,
     QueryClient,
 } from '@tanstack/react-query';
 import { productApi, productKeys } from '@/entities/product';
-import { ProductCardView } from '@/widgets/product-editor/ProductCardView';
+import { ProductCardView } from '@/widgets/product-editor/ui/ProductCardView';
 import { buttonVariants } from '@/shared/components';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -17,8 +15,6 @@ interface Props {
 
 export default async function ProductPage({ params }: Props) {
     const { id } = await params;
-    const session = await getServerSession(authOptions);
-    const isAdmin = session?.user?.roles?.includes('ADMIN') ?? false;
 
     const queryClient = new QueryClient();
     await queryClient.query({
@@ -42,7 +38,6 @@ export default async function ProductPage({ params }: Props) {
             <HydrationBoundary state={dehydrate(queryClient)}>
                 <ProductCardView
                     productId={id}
-                    isAdmin={isAdmin}
                 />
             </HydrationBoundary>
         </main>

@@ -1,1 +1,2 @@
-export { ProductEditor } from '@/widgets/product-editor/ProductEditor';
+export { ProductCardView } from './ui/ProductCardView'
+export { ProductFormEditor } from './ui/ProductFormEditor'
