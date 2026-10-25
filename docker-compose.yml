@@ -47,6 +47,9 @@ services:
       - PORT=3000
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
       - INTERNAL_API_URL=${INTERNAL_API_URL}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - AUTH_SECRET=${AUTH_SECRET}
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
     ports:
       - "127.0.0.1:3000:3000"
     depends_on:
