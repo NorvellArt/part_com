@@ -11,7 +11,7 @@ import { cn } from 'cn';
 
 export function HeaderCatalogDropdown() {
     const [isOpen, setIsOpen] = useState(false);
-    const { data: tree = [], isLoading } = useCategoriesTree();
+    const { data: tree = [] } = useCategoriesTree();
     const [selectedRoot, setSelectedRoot] = useState<CategoryNode | null>(null);
 
     const handleOpenChange = (open: boolean) => {
@@ -49,11 +49,7 @@ export function HeaderCatalogDropdown() {
                 sideOffset={12}
                 className="w-[100%] p-0 border border-slate-200/80 rounded-2xl shadow-xl overflow-hidden bg-white z-50"
             >
-                {isLoading ? (
-                    <div className="p-12 text-center text-xs text-slate-400 font-medium">
-                        Загрузка структуры каталога...
-                    </div>
-                ) : tree.length === 0 ? (
+                {tree.length === 0 ? (
                     <div className="p-12 text-center text-xs text-slate-400">
                         Каталог временно пуст.
                     </div>

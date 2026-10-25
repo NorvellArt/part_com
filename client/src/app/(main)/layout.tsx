@@ -7,6 +7,8 @@ import { authOptions } from '@/entities/session';
 import { LogoutButton } from '@/features/auth/ui/LogoutButton';
 import { ShieldCheck } from 'lucide-react';
 import { HeaderCatalogDropdown } from '@/widgets/header-catalog-dropdown';
+import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query';
+import { categoryApi, categoryKeys } from '@/entities/category';
 
 export default async function MainLayout({
     children,
@@ -15,6 +17,12 @@ export default async function MainLayout({
 }>) {
     const session = await getServerSession(authOptions);
     const isAdmin = session?.user?.roles?.includes('ADMIN');
+
+    const queryClient = new QueryClient();
+    await queryClient.query({
+        queryKey: categoryKeys.trees(),
+        queryFn: ({ signal }) => categoryApi.getTree(signal),
+    });
 
     return (
         <>
@@ -28,9 +36,11 @@ export default async function MainLayout({
                         <span className="font-bold text-amber-600">52</span>
                     </Link>
 
-                    <div className="shrink-0">
-                        <HeaderCatalogDropdown />
-                    </div>
+                    <HydrationBoundary state={dehydrate(queryClient)}>
+                        <div className="shrink-0">
+                            <HeaderCatalogDropdown />
+                        </div>
+                    </HydrationBoundary> 
 
                     <div className="flex-1 max-w-md mx-auto flex justify-center">
                         <Suspense
