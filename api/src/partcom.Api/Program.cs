@@ -9,15 +9,23 @@ using partcom.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
+string myAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
+var corsOriginsEnv = Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS")
+                     ?? "http://localhost:3000";
+
+var allowedOrigins = corsOriginsEnv.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
-    {
-        policy.WithOrigins("http://localhost:3000")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
-    });
+    options.AddPolicy(name: myAllowSpecificOrigins,
+        policy =>
+        {
+            policy.WithOrigins(allowedOrigins)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        });
 });
 
 builder.Services.AddInfrastructure(builder.Configuration);
