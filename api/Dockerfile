@@ -1,15 +1,16 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-WORKDIR /src
+WORKDIR /build
 
-COPY ["src/partcom.Api/partcom.Api.csproj", "partcom.Api/"]
-COPY ["src/partcom.Application/partcom.Application.csproj", "partcom.Application/"]
-COPY ["src/partcom.Domain/partcom.Domain.csproj", "partcom.Domain/"]
-COPY ["src/partcom.Infrastructure/partcom.Infrastructure.csproj", "partcom.Infrastructure/"]
+COPY ["src/partcom.Api/partcom.Api.csproj", "src/partcom.Api/"]
+COPY ["src/partcom.Application/partcom.Application.csproj", "src/partcom.Application/"]
+COPY ["src/partcom.Domain/partcom.Domain.csproj", "src/partcom.Domain/"]
+COPY ["src/partcom.Infrastructure/partcom.Infrastructure.csproj", "src/partcom.Infrastructure/"]
 
-RUN dotnet restore "partcom.Api/partcom.Api.csproj"
+RUN dotnet restore "src/partcom.Api/partcom.Api.csproj"
 
-COPY src/ .
-WORKDIR "/src/partcom.Api"
+COPY src/ src/
+
+WORKDIR "/build/src/partcom.Api"
 RUN dotnet build "partcom.Api.csproj" -c Release -o /app/build
 
 FROM build AS publish
@@ -17,7 +18,8 @@ RUN dotnet publish "partcom.Api.csproj" -c Release -o /app/publish /p:UseAppHost
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
-EXPOSE 5288
+
+EXPOSE 5286
 
 USER app
 
