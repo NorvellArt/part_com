@@ -1,13 +1,18 @@
 namespace partcom.Application.Services;
 
+using partcom.Application.Common;
 using partcom.Application.DTOs;
 using partcom.Application.Interfaces;
 using partcom.Domain.Entities;
 using partcom.Domain.Interfaces;
 
-public class CategoryService(ICategoryRepository categoryRepository) : ICategoryService
+public class CategoryService(
+    ICategoryRepository categoryRepository,
+    IProductRepository productRepository
+    ) : ICategoryService
 {
     private readonly ICategoryRepository _categoryRepository = categoryRepository;
+    private readonly IProductRepository _productRepository = productRepository;
 
     public async Task<List<CategoryNodeDto>> GetTreeAsync(CancellationToken cancellationToken = default)
     {
@@ -86,13 +91,27 @@ public class CategoryService(ICategoryRepository categoryRepository) : ICategory
         return true;
     }
 
-    public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Result> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var category = await _categoryRepository.GetByIdAsync(id, cancellationToken);
-        if (category == null) return false;
+        if (category == null)
+            return Result.Failure("Категория не найдена.");
+
+        var hasSubCategories = await _categoryRepository.HasSubCategoriesAsync(id, cancellationToken);
+        if (hasSubCategories)
+        {
+            return Result.Failure("Нельзя удалить категорию, так как у нее есть дочерние подкатегории.");
+        }
+
+        var hasProducts = await _productRepository.HasProductsAsync(id, cancellationToken);
+        if (hasProducts)
+        {
+            return Result.Failure("Нельзя удалить категорию, так как к ней привязаны товары.");
+        }
 
         await _categoryRepository.DeleteAsync(id, cancellationToken);
         await _categoryRepository.SaveChangesAsync(cancellationToken);
-        return true;
+
+        return Result.Success();
     }
 }

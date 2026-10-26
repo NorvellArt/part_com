@@ -55,6 +55,11 @@ public class PostgresCategoryRepository(AppDbContext context) : ICategoryReposit
         await _context.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task<bool> HasSubCategoriesAsync(Guid categoryId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Categories
+            .AnyAsync(c => c.ParentId == categoryId, cancellationToken);
+    }
 
     private static Category MapToDomain(CategoryEntity entity)
     {

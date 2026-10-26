@@ -259,6 +259,12 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
         await _context.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task<bool> HasProductsAsync(Guid categoryId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Products
+            .AnyAsync(p => p.CategoryId == categoryId, cancellationToken);
+    }
+
     private static Product MapToDomain(ProductEntity entity)
     {
         var domainCategory = entity.Category != null

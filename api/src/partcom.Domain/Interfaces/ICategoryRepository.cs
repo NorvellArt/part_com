@@ -10,4 +10,5 @@ public interface ICategoryRepository
     Task AddAsync(Category category, CancellationToken cancellationToken = default);
     Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
+    Task<bool> HasSubCategoriesAsync(Guid categoryId, CancellationToken cancellationToken = default);
 }
