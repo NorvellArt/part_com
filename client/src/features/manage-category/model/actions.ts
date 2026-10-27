@@ -13,15 +13,17 @@ export function useCreateCategory() {
     });
 }
 
-export function useUpdateCategory(id: string) {
+export function useUpdateCategory() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (input: UpdateCategoryInput) => categoryApi.update(id, input),
-        onSuccess: () => {
+        mutationFn: ({ id, data }: { id: string; data: { name: string; slug: string } }) =>
+            categoryApi.update(id, data),
+
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: categoryKeys.detail(variables.id) });
             queryClient.invalidateQueries({ queryKey: categoryKeys.trees() });
-            queryClient.invalidateQueries({ queryKey: categoryKeys.detail(id) });
-        },
+        }
     });
 }
 

@@ -50,6 +50,16 @@ public class PostgresCategoryRepository(AppDbContext context) : ICategoryReposit
         }
     }
 
+    public async Task UpdateAsync(Category category, CancellationToken cancellationToken = default)
+    {
+        var entity = await _context.Categories.FindAsync([category.Id], cancellationToken)
+            ?? throw new InvalidOperationException($"Сущность CategoryEntity с Id {category.Id} не найдена для обновления.");
+
+        entity.Name = category.Name;
+        entity.Slug = category.Slug;
+        entity.ParentId = category.ParentId;
+    }
+
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         await _context.SaveChangesAsync(cancellationToken);

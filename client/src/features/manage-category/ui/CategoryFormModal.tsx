@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { CategoryNode } from '@/entities/category/model/types';
 import {
     Button,
@@ -12,6 +14,7 @@ import {
     DialogTitle,
     DialogFooter,
 } from '@/shared/components';
+import { CategoryFormValues, categorySchema } from '../model/categorySchema';
 
 interface CategoryFormModalProps {
     isOpen: boolean;
@@ -28,36 +31,39 @@ export function CategoryFormModal({
     editNode,
     parentNode,
 }: CategoryFormModalProps) {
-    const [name, setName] = useState('');
-    const [slug, setSlug] = useState('');
+    const {
+        register,
+        handleSubmit,
+        reset,
+        setValue,
+        formState: { errors, isValid },
+    } = useForm<CategoryFormValues>({
+        resolver: zodResolver(categorySchema),
+        defaultValues: {
+            name: '',
+            slug: '',
+        },
+        mode: 'onChange',
+    });
 
     useEffect(() => {
-        if (editNode) {
-            setName(editNode.name);
-            setSlug(editNode.slug);
-        } else {
-            setName('');
-            setSlug('');
+        if (isOpen) {
+            if (editNode) {
+                reset({
+                    name: editNode.name,
+                    slug: editNode.slug,
+                });
+            } else {
+                reset({
+                    name: '',
+                    slug: '',
+                });
+            }
         }
-    }, [editNode, isOpen]);
+    }, [editNode, isOpen, reset]);
 
-    const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const val = e.target.value;
-        setName(val);
-        if (!editNode) {
-            const generatedSlug = val
-                .toLowerCase()
-                .replace(/[^a-zа-я0-9\s-]/g, '')
-                .replace(/\s+/g, '-');
-            setSlug(generatedSlug);
-        }
-    };
-
-    const handleSubmit = (e: React.SubmitEvent) => {
-        e.preventDefault();
-        if (!name.trim() || !slug.trim()) return;
-
-        onSave(name, slug);
+    const onSubmit = (data: CategoryFormValues) => {
+        onSave(data.name, data.slug);
     };
 
     return (
@@ -77,7 +83,7 @@ export function CategoryFormModal({
                 </DialogHeader>
 
                 <form
-                    onSubmit={handleSubmit}
+                    onSubmit={handleSubmit(onSubmit)}
                     className="space-y-4 py-2"
                 >
                     <div className="space-y-1">
@@ -85,26 +91,37 @@ export function CategoryFormModal({
                         <Input
                             id="category-name"
                             type="text"
-                            value={name}
-                            onChange={handleNameChange}
                             autoComplete="off"
+                            {...register('name')}
                         />
+                        {errors.name && (
+                            <p className="text-xs text-destructive">
+                                {errors.name.message}
+                            </p>
+                        )}
                     </div>
+
                     <div className="space-y-1">
                         <Label htmlFor="category-slug">Slug (URL)</Label>
                         <Input
                             id="category-slug"
                             type="text"
-                            value={slug}
-                            onChange={(e) =>
-                                setSlug(
-                                    e.target.value
-                                        .toLowerCase()
-                                        .replace(/\s+/g, '-'),
-                                )
-                            }
                             autoComplete="off"
+                            {...register('slug')}
+                            onChange={(e) => {
+                                const formattedValue = e.target.value
+                                    .toLowerCase()
+                                    .replace(/\s+/g, '-');
+                                setValue('slug', formattedValue, {
+                                    shouldValidate: true,
+                                });
+                            }}
                         />
+                        {errors.slug && (
+                            <p className="text-xs text-destructive">
+                                {errors.slug.message}
+                            </p>
+                        )}
                     </div>
 
                     <DialogFooter className="pt-4">
@@ -117,7 +134,7 @@ export function CategoryFormModal({
                         </Button>
                         <Button
                             type="submit"
-                            disabled={!name.trim() || !slug.trim()}
+                            disabled={!isValid}
                         >
                             Сохранить
                         </Button>

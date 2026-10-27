@@ -3,6 +3,7 @@ import '@/app/globals.css';
 import { Geist } from 'next/font/google';
 import { cn } from 'cn';
 import { Providers } from '@/app/providers';
+import { Toaster } from '@/shared/components';
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -22,7 +23,10 @@ export default function RootLayout({
             className={cn('font-sans', geist.variable)}
         >
             <body className="antialiased bg-slate-50 text-slate-900 min-h-screen flex flex-col">
-                <Providers>{children}</Providers>
+                <Providers>
+                    {children}
+                    <Toaster />
+                </Providers>
             </body>
         </html>
     );

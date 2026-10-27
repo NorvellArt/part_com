@@ -62,15 +62,24 @@ public class CategoryService(
         return new CategoryDto(category.Id, category.Name, category.Slug, category.ParentId, category.Level);
     }
 
-    public async Task<bool> UpdateAsync(Guid id, UpdateCategoryDto dto, CancellationToken cancellationToken = default)
+    public async Task<Result> UpdateAsync(Guid id, UpdateCategoryDto dto, CancellationToken cancellationToken = default)
     {
         var category = await _categoryRepository.GetByIdAsync(id, cancellationToken);
-        if (category == null) return false;
+        if (category == null)
+            return Result.Failure("Категория не найдена.");
+
+        if (category.Slug != dto.Slug)
+        {
+            var existingCategoryWithSlug = await _categoryRepository.GetBySlugAsync(dto.Slug, cancellationToken);
+            if (existingCategoryWithSlug != null)
+                return Result.Failure("Категория с таким Slug уже существует.");
+        }
 
         category.Update(dto.Name, dto.Slug);
 
+        await _categoryRepository.UpdateAsync(category, cancellationToken);
         await _categoryRepository.SaveChangesAsync(cancellationToken);
-        return true;
+        return Result.Success();
     }
 
     public async Task<bool> MoveAsync(Guid id, Guid? newParentId, CancellationToken cancellationToken = default)

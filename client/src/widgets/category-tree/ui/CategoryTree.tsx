@@ -16,6 +16,7 @@ import {
     Alert,
     AlertDescription,
     AlertTitle,
+    toast,
 } from '@/shared/components';
 
 export function CategoryTree() {
@@ -23,7 +24,7 @@ export function CategoryTree() {
 
     const createCategoryMutation = useCreateCategory();
     const deleteCategoryMutation = useDeleteCategory();
-    const updateCategoryMutation = useUpdateCategory('');
+    const updateCategoryMutation = useUpdateCategory();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [activeParent, setActiveParent] = useState<CategoryNode | null>(null);
@@ -50,10 +51,18 @@ export function CategoryTree() {
     const handleSave = (name: string, slug: string) => {
         if (activeEdit) {
             updateCategoryMutation.mutate(
-                { name, slug },
                 {
-                    onSuccess: () => setIsModalOpen(false),
-                    onError: (err: any) => alert(err.message),
+                    id: activeEdit.id,
+                    data: { name, slug },
+                },
+                {
+                    onSettled: () => setIsModalOpen(false),
+                    onError: (err: any) =>
+                        toast.add({
+                            type: 'error',
+                            title: err.message,
+                            priority: 'high',
+                        }),
                 },
             );
         } else {
@@ -64,8 +73,13 @@ export function CategoryTree() {
                     parentId: activeParent ? activeParent.id : null,
                 },
                 {
-                    onSuccess: () => setIsModalOpen(false),
-                    onError: (err: any) => alert(err.message),
+                    onSettled: () => setIsModalOpen(false),
+                    onError: (err: any) =>
+                        toast.add({
+                            type: 'error',
+                            title: err.message,
+                            priority: 'high',
+                        }),
                 },
             );
         }
@@ -75,7 +89,12 @@ export function CategoryTree() {
         if (!confirm('Вы уверены, что хотите удалить категорию?')) return;
 
         deleteCategoryMutation.mutate(id, {
-            onError: (err: any) => alert(err.message),
+            onError: (err: any) =>
+                toast.add({
+                    type: 'error',
+                    title: err.message,
+                    priority: 'high',
+                }),
         });
     };
 

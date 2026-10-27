@@ -40,8 +40,18 @@ public static class CategoryEndpoints
 
         group.MapPut("/{id:guid}", async (Guid id, UpdateCategoryDto dto, ICategoryService categoryService, CancellationToken ct) =>
         {
-            var updated = await categoryService.UpdateAsync(id, dto, ct);
-            return updated ? Results.NoContent() : Results.NotFound();
+            var result = await categoryService.UpdateAsync(id, dto, ct);
+            if (!result.IsSuccess)
+            {
+                if (result.Error == "Категория не найдена.")
+                {
+                    return Results.NotFound(new { error = result.Error });
+                }
+                
+                return Results.BadRequest(new { error = result.Error });
+            }
+
+            return Results.NoContent();
         })
         .WithName("UpdateCategory")
         .Produces(StatusCodes.Status204NoContent)

@@ -17,5 +17,6 @@ export * from '@/shared/components/ui/select'
 export * from '@/shared/components/ui/table'
 export * from '@/shared/components/ui/breadcrumb'
 export * from '@/shared/components/ui/checkbox'
+export * from '@/shared/components/ui/toast'
 
 export { TruncatedFileName } from '@/shared/components/TruncatedFileName'

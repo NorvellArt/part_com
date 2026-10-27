@@ -83,6 +83,7 @@ export function CategoryTreeNode({
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        disabled={hasChildren}
                         onClick={() => onDelete(node.id)}
                     >
                         <Trash2 className="h-3.5 w-3.5" />
