@@ -14,7 +14,6 @@ export function useDeleteProduct(id: string) {
             }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: productKeys.all });
-            router.push('/');
         },
     });
 }

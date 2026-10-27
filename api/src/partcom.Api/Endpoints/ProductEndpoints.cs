@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using partcom.Domain.Common;
+using partcom.Application.Common;
 
 public static class ProductEndpoints
 {
@@ -68,8 +69,14 @@ public static class ProductEndpoints
         .Produces(StatusCodes.Status404NotFound)
         .RequireAuthorization();
 
-        group.MapPost("/import", async (IFormFile file, IProductService productService, CancellationToken ct) =>
+        group.MapPost("/import", async (
+            HttpContext context,
+            IProductService productService,
+            CancellationToken ct) =>
         {
+            var form = await context.Request.ReadFormAsync(ct);
+            var file = form.Files.GetFile("file");
+
             if (file is null || file.Length == 0)
             {
                 return Results.BadRequest(new { message = "Файл не был загружен или пуст." });
@@ -81,13 +88,32 @@ public static class ProductEndpoints
                 return Results.BadRequest(new { message = "Неверный формат файла. Поддерживаются только .xlsx и .xls" });
             }
 
+            var disabledColumnsValues = form["disabledColumns"];
+            var disabledColumns = disabledColumnsValues.Count > 0
+                ? disabledColumnsValues.ToList()
+                : null;
+
+            var settings = new ExcelImportSettings
+            {
+                DisabledColumnsForUpdate = disabledColumns != null
+                    ? new HashSet<string>(
+                        disabledColumns.Where(c => !string.IsNullOrEmpty(c))!,
+                        StringComparer.OrdinalIgnoreCase)
+                    : []
+            };
+
             using var stream = file.OpenReadStream();
-            var (importedCount, updatedCount) = await productService.ImportFromExcelAsync(stream, ct);
+
+            var result = await productService.ImportFromExcelAsync(stream, settings, ct);
+            if (!result.IsSuccess)
+            {
+                return Results.BadRequest(new { message = result.Error });
+            }
 
             return Results.Ok(new
             {
-                importedCount,
-                updatedCount
+                importedCount = result.Value.InsertedCount,
+                updatedCount = result.Value.UpdatedCount
             });
         })
         .DisableAntiforgery()

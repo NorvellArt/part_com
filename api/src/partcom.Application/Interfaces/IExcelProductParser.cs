@@ -1,8 +1,12 @@
 namespace partcom.Application.Interfaces;
 
+using partcom.Application.Common;
 using partcom.Domain.Entities;
 
 public interface IExcelProductParser
 {
-    Task<IReadOnlyList<Product>> ParseProductsAsync(Stream stream, CancellationToken cancellationToken = default);
+    Result<IReadOnlyList<Product>> ParseProductsAsync(
+        Stream stream,
+        ExcelImportSettings settings,
+        CancellationToken cancellationToken = default);
 }

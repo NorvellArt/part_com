@@ -1,5 +1,6 @@
 namespace partcom.Application.Interfaces;
 
+using partcom.Application.Common;
 using partcom.Application.DTOs;
 using partcom.Domain.Common;
 
@@ -17,7 +18,10 @@ public interface IProductService
     bool? hasCategory = null,
     CancellationToken cancellationToken = default);
 
-    Task<(int InsertedCount, int UpdatedCount)> ImportFromExcelAsync(Stream fileStream, CancellationToken cancellationToken = default);
+    Task<Result<(int InsertedCount, int UpdatedCount)>> ImportFromExcelAsync(
+        Stream fileStream,
+        ExcelImportSettings settings,
+        CancellationToken cancellationToken = default);
     Task<bool> AssignCategoryAsync(Guid productId, Guid? categoryId, CancellationToken cancellationToken = default);
     Task BulkAssignCategoryAsync(
         IEnumerable<Guid> productIds,

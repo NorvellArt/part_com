@@ -2,12 +2,16 @@ namespace partcom.Infrastructure.Services;
 
 using System.Globalization;
 using ExcelDataReader;
+using partcom.Application.Common;
 using partcom.Application.Interfaces;
 using partcom.Domain.Entities;
 
 public class ExcelProductParser : IExcelProductParser
 {
-    public Task<IReadOnlyList<Product>> ParseProductsAsync(Stream stream, CancellationToken cancellationToken = default)
+    public Result<IReadOnlyList<Product>> ParseProductsAsync(
+        Stream stream,
+        ExcelImportSettings settings,
+        CancellationToken cancellationToken = default)
     {
         System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
@@ -23,6 +27,30 @@ public class ExcelProductParser : IExcelProductParser
 
             if (!isHeaderSkipped)
             {
+                var actualHeaders = new List<string>();
+
+                int fieldCount = reader.FieldCount;
+
+                for (int i = 0; i < settings.ExpectedHeaders.Count; i++)
+                {
+                    string header = i < fieldCount
+                        ? (reader.GetValue(i)?.ToString()?.Trim() ?? string.Empty)
+                        : string.Empty;
+
+                    actualHeaders.Add(header);
+                }
+
+                for (int i = 0; i < settings.ExpectedHeaders.Count; i++)
+                {
+                    if (!string.Equals(actualHeaders[i], settings.ExpectedHeaders[i], StringComparison.OrdinalIgnoreCase))
+                    {
+                        string foundColumn = string.IsNullOrEmpty(actualHeaders[i]) ? "[отсутствует]" : $"'{actualHeaders[i]}'";
+
+                        return Result<IReadOnlyList<Product>>.Failure(
+                            $"Неверная структура файла. Ожидалась колонка '{settings.ExpectedHeaders[i]}' на позиции {i + 1}, но обнаружена {foundColumn}.");
+                    }
+                }
+
                 isHeaderSkipped = true;
                 continue;
             }
@@ -41,7 +69,7 @@ public class ExcelProductParser : IExcelProductParser
             products.Add(product);
         }
 
-        return Task.FromResult<IReadOnlyList<Product>>(products);
+        return Result<IReadOnlyList<Product>>.Success(products);
     }
 
     private static decimal ConvertToDecimal(object? value)

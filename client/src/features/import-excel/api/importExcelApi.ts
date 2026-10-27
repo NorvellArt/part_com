@@ -10,9 +10,18 @@ interface ImportExcelResponse {
     updatedCount: number;
 }
 
-export async function importExcelApi(file: File): Promise<ImportExcelResponse> {
+export async function importExcelApi(
+    file: File,
+    disabledColumns?: string[]
+): Promise<ImportExcelResponse> {
     const formData = new FormData();
     formData.append('file', file);
+
+    if (disabledColumns && disabledColumns.length > 0) {
+        disabledColumns.forEach(column => {
+            formData.append('disabledColumns', column);
+        });
+    }
 
     const response = await fetchApi<ImportExcelResponse>('/api/products/import', {
         method: 'POST',
@@ -24,10 +33,11 @@ export async function importExcelApi(file: File): Promise<ImportExcelResponse> {
 
 export function useImportExcel() {
     const queryClient = useQueryClient();
-    const router = useRouter(); 
+    const router = useRouter();
 
     return useMutation({
-        mutationFn: importExcelApi,
+        mutationFn: ({ file, disabledColumns }: { file: File; disabledColumns: string[] }) =>
+            importExcelApi(file, disabledColumns),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: productKeys.all });
             router.refresh();

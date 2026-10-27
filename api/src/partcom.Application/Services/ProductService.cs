@@ -1,5 +1,6 @@
 namespace partcom.Application.Services;
 
+using partcom.Application.Common;
 using partcom.Application.DTOs;
 using partcom.Application.Interfaces;
 using partcom.Domain.Common;
@@ -84,15 +85,22 @@ public class ProductService(
         );
     }
 
-    public async Task<(int InsertedCount, int UpdatedCount)> ImportFromExcelAsync(
+    public async Task<Result<(int InsertedCount, int UpdatedCount)>> ImportFromExcelAsync(
         Stream fileStream,
+        ExcelImportSettings settings,
         CancellationToken cancellationToken = default
         )
     {
         if (fileStream is null || fileStream.Length == 0)
-            throw new ArgumentException("Файл импорта не может быть пустым.", nameof(fileStream));
+            return Result<(int, int)>.Failure("Файл импорта не может быть пустым.");
 
-        var parsedProducts = await _excelParser.ParseProductsAsync(fileStream, cancellationToken);
+        var parseResult = _excelParser.ParseProductsAsync(fileStream, settings, cancellationToken);
+        if (parseResult.Error != null)
+        {
+            return Result<(int, int)>.Failure(parseResult.Error);
+        }
+
+        var parsedProducts = parseResult.Value ?? [];
 
         var excelKeys = parsedProducts
             .Where(p => !string.IsNullOrWhiteSpace(p.ItemNumber) && !string.IsNullOrWhiteSpace(p.Brand))
@@ -114,20 +122,20 @@ public class ProductService(
             if (string.IsNullOrWhiteSpace(parsedProduct.ItemNumber) || string.IsNullOrWhiteSpace(parsedProduct.Brand))
                 continue;
 
-            var currentKey = (
+            (string ItemNumber, string Brand) currentKey = (
                 ItemNumber: parsedProduct.ItemNumber.Trim().ToLowerInvariant(),
                 Brand: parsedProduct.Brand.Trim().ToLowerInvariant()
             );
 
             if (existingProducts.TryGetValue(currentKey, out var existingProduct))
             {
-                existingProduct.Update(
-                    parsedProduct.Brand,
-                    parsedProduct.ItemNumber,
-                    parsedProduct.Name,
-                    parsedProduct.Price,
-                    parsedProduct.Quantity
-                );
+                var brand = parsedProduct.Brand;
+                var itemNumber = parsedProduct.ItemNumber;
+                var name = settings.DisabledColumnsForUpdate.Contains("НАИМЕНОВАНИЕ") ? existingProduct.Name : parsedProduct.Name;
+                var price = settings.DisabledColumnsForUpdate.Contains("ЦЕНА") ? existingProduct.Price : parsedProduct.Price;
+                var quantity = settings.DisabledColumnsForUpdate.Contains("НАЛИЧИЕ") ? existingProduct.Quantity : parsedProduct.Quantity;
+
+                existingProduct.Update(brand, itemNumber, name, price, quantity);
 
                 productsToUpdate[currentKey] = existingProduct;
             }
@@ -150,7 +158,7 @@ public class ProductService(
 
         await _productRepository.SaveChangesAsync(cancellationToken);
 
-        return (productsToAdd.Count, productsToUpdate.Count);
+        return Result<(int, int)>.Success((productsToAdd.Count, productsToUpdate.Count));
     }
 
     public async Task<bool> AssignCategoryAsync(Guid productId, Guid? categoryId, CancellationToken cancellationToken = default)
