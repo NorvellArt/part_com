@@ -59,7 +59,15 @@ public class ProductService(
         if (product is null)
             return false;
 
+        var imagePathToDelete = product.ImageUrl;
+
         await _productRepository.DeleteAsync(id, cancellationToken);
+
+        if (!string.IsNullOrWhiteSpace(imagePathToDelete))
+        {
+            _fileStorageService.DeleteFile(imagePathToDelete);
+        }
+
         return true;
     }
 
