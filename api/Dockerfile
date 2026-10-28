@@ -21,6 +21,8 @@ WORKDIR /app
 
 EXPOSE 5286
 
+COPY --from=publish --chown=app:app /app/publish .
+
 USER root
 RUN mkdir -p /app/wwwroot && chown -R app:app /app/wwwroot
 
