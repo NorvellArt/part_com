@@ -123,6 +123,49 @@ public static class ProductEndpoints
         .RequireAuthorization();
 
         group.MapPut("/bulk-assign-category", BulkAssignCategoryAsync);
+
+        group.MapPost("/{id:guid}/image", async (
+            Guid id,
+            HttpContext context,
+            IProductService productService,
+            CancellationToken ct) =>
+        {
+            var form = await context.Request.ReadFormAsync(ct);
+            var file = form.Files.GetFile("file");
+
+            if (file is null || file.Length == 0)
+            {
+                return Results.BadRequest(new { message = "Файл не был передан или он пустой." });
+            }
+
+            using var stream = file.OpenReadStream();
+
+            var result = await productService.UploadImageAsync(id, stream, file.FileName, ct);
+
+            return result.IsSuccess
+                ? Results.Ok(new { imageUrl = result.Value })
+                : Results.BadRequest(new { message = result.Error });
+        })
+        .DisableAntiforgery()
+        .Accepts<IFormFile>("multipart/form-data")
+        .Produces(StatusCodes.Status200OK)
+        .Produces(StatusCodes.Status400BadRequest)
+        .RequireAuthorization();
+
+        group.MapDelete("/{id:guid}/image", async (
+            Guid id,
+            IProductService productService,
+            CancellationToken ct) =>
+        {
+            var result = await productService.DeleteImageAsync(id, ct);
+
+            return result.IsSuccess
+                ? Results.NoContent()
+                : Results.BadRequest(new { message = result.Error });
+        })
+        .Produces(StatusCodes.Status204NoContent)
+        .Produces(StatusCodes.Status400BadRequest)
+        .RequireAuthorization();
     }
 
     private static async Task<IResult> SearchProducts(

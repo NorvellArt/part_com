@@ -10,12 +10,15 @@ using partcom.Domain.Interfaces;
 public class ProductService(
     IProductRepository productRepository,
     ICategoryRepository categoryRepository,
-    IExcelProductParser excelParser
+    IExcelProductParser excelParser,
+    IFileStorageService fileStorageService
     ) : IProductService
 {
     private readonly IProductRepository _productRepository = productRepository;
     private readonly ICategoryRepository _categoryRepository = categoryRepository;
     private readonly IExcelProductParser _excelParser = excelParser;
+    private readonly IFileStorageService _fileStorageService = fileStorageService;
+    private const string ProductsImageDirectory = "images/products";
 
     public async Task<ProductDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
@@ -34,7 +37,7 @@ public class ProductService(
         );
 
         await _productRepository.AddAsync(product, cancellationToken);
-        await _productRepository.SaveChangesAsync();
+        await _productRepository.SaveChangesAsync(cancellationToken);
         return MapToDto(product);
     }
 
@@ -46,7 +49,7 @@ public class ProductService(
 
         product.Update(dto.Brand, dto.ItemNumber, dto.Name, dto.Price, dto.Quantity);
         await _productRepository.UpdateAsync(product, cancellationToken);
-        await _productRepository.SaveChangesAsync();
+        await _productRepository.SaveChangesAsync(cancellationToken);
         return true;
     }
 
@@ -221,4 +224,85 @@ public class ProductService(
         product.CategoryId,
         product.Category?.Name
     );
+
+    public async Task<Result<string>> UploadImageAsync(
+        Guid productId,
+        Stream fileStream,
+        string fileName,
+        CancellationToken cancellationToken = default)
+    {
+        var product = await _productRepository.GetByIdAsync(productId, cancellationToken);
+        if (product == null)
+        {
+            return Result<string>.Failure($"Товар с Id {productId} не найден.");
+        }
+
+        var oldImagePath = product.ImageUrl;
+
+        var saveResult = await _fileStorageService.SaveFileAsync(
+            fileStream,
+            fileName,
+            ProductsImageDirectory,
+            cancellationToken);
+
+        if (!saveResult.IsSuccess)
+        {
+            return Result<string>.Failure(saveResult.Error ?? "Не удалось сохранить файл.");
+        }
+
+        var newImageUrl = saveResult.Value ?? "";
+
+        try
+        {
+            product.ChangeImage(newImageUrl);
+
+            await _productRepository.UpdateAsync(product, cancellationToken);
+            await _productRepository.SaveChangesAsync(cancellationToken);
+
+            if (!string.IsNullOrWhiteSpace(oldImagePath))
+            {
+                _fileStorageService.DeleteFile(oldImagePath);
+            }
+
+            return Result<string>.Success(newImageUrl);
+        }
+        catch (Exception ex)
+        {
+            _fileStorageService.DeleteFile(newImageUrl);
+
+            return Result<string>.Failure($"Ошибка при сохранении пути к изображению в БД: {ex.Message}");
+        }
+    }
+
+    public async Task<Result> DeleteImageAsync(Guid productId, CancellationToken cancellationToken = default)
+    {
+        var product = await _productRepository.GetByIdAsync(productId, cancellationToken);
+        if (product == null)
+        {
+            return Result.Failure($"Товар с Id {productId} не найден.");
+        }
+
+        if (string.IsNullOrWhiteSpace(product.ImageUrl))
+        {
+            return Result.Failure("У данного товара нет установленного изображения.");
+        }
+
+        var imagePathToDelete = product.ImageUrl;
+
+        try
+        {
+            product.RemoveImage();
+
+            await _productRepository.UpdateAsync(product, cancellationToken);
+            await _productRepository.SaveChangesAsync(cancellationToken);
+
+            var deleteResult = _fileStorageService.DeleteFile(imagePathToDelete);
+
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure($"Ошибка при удалении изображения из БД: {ex.Message}");
+        }
+    }
 }

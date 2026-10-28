@@ -36,9 +36,6 @@ public static class DependencyInjection
         })
         .AddEntityFrameworkStores<AppDbContext>()
         .AddDefaultTokenProviders();
-
-        // ВМЕСТО JWT BEARER: Регистрируем кастомную сессионную схему аутентификации.
-        // Она будет перехватывать заголовок X-Session-Id через наш SessionAuthenticationHandler.
         services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = "PartcomSessionScheme";
@@ -53,6 +50,7 @@ public static class DependencyInjection
         services.AddScoped<IProductRepository, PostgresProductRepository>();
         services.AddScoped<ICategoryRepository, PostgresCategoryRepository>();
         services.AddScoped<IExcelProductParser, ExcelProductParser>();
+        services.AddScoped<IFileStorageService, FileStorageService>();
 
         return services;
     }

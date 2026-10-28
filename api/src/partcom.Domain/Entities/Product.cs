@@ -49,7 +49,19 @@ public class Product
         Name = name;
         Price = price;
         Quantity = quantity;
+    }
+
+    public void ChangeImage(string imageUrl)
+    {
+        if (string.IsNullOrWhiteSpace(imageUrl))
+            throw new ArgumentException("Путь к изображению не может быть пустым.", nameof(imageUrl));
+
         ImageUrl = imageUrl;
+    }
+
+    public void RemoveImage()
+    {
+        ImageUrl = null;
     }
 
     public void AssignCategory(Category? category)

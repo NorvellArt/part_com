@@ -277,9 +277,14 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
             itemNumber: entity.ItemNumber,
             name: entity.Name,
             price: entity.Price,
-            quantity: entity.Quantity,
-            imageUrl: entity.ImageUrl
+            quantity: entity.Quantity
         );
+
+        if (!string.IsNullOrWhiteSpace(entity.ImageUrl))
+        {
+            product.ChangeImage(entity.ImageUrl);
+        }
+
 
         if (domainCategory != null)
         {

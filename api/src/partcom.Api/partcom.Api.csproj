@@ -4,6 +4,9 @@
     <ProjectReference Include="..\partcom.Application\partcom.Application.csproj" />
     <ProjectReference Include="..\partcom.Infrastructure\partcom.Infrastructure.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="wwwroot\" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.12" />

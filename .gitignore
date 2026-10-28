@@ -73,3 +73,6 @@ client/.turbo
 *.suo
 *.user
 *.userprefs
+
+api/src/partcom.Api/wwwroot/*
+!api/src/partcom.Api/wwwroot/.gitkeep

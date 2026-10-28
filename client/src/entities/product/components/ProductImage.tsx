@@ -19,6 +19,11 @@ export const ProductImage: React.FC<ProductImageProps> = ({
 }) => {
     const [imageError, setImageError] = useState(false);
 
+    const safeSrc = src ?? '';
+    const internalApiUrl = process.env.INTERNAL_API_URL || 'http://localhost:5286';
+    const fullSrc = safeSrc.startsWith('/') ? `${internalApiUrl}${safeSrc}` : safeSrc;
+    console.log('fullSrc', fullSrc)
+
     if (!src || imageError) {
         return (
             <div
@@ -37,12 +42,13 @@ export const ProductImage: React.FC<ProductImageProps> = ({
     return (
         <div className={`relative overflow-hidden ${className}`}>
             <Image
-                src={src}
+                src={fullSrc}
                 alt={alt}
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className="object-cover transition-transform duration-300 group-hover:scale-105"
                 onError={() => setImageError(true)}
+                unoptimized
             />
         </div>
     );
