@@ -20,7 +20,7 @@ export const ProductImage: React.FC<ProductImageProps> = ({
     const [imageError, setImageError] = useState(false);
 
     const safeSrc = src ?? '';
-    const internalApiUrl = process.env.INTERNAL_API_URL || 'http://localhost:5286';
+    const internalApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5286';
     const fullSrc = safeSrc.startsWith('/') ? `${internalApiUrl}${safeSrc}` : safeSrc;
     console.log('fullSrc', fullSrc)
 
