@@ -17,15 +17,28 @@ export function ProductFormEditorSkeleton() {
                 <div className="md:col-span-2 space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Skeleton className="h-4 w-16" />
-                            <Skeleton className="h-10 w-full" />
-                        </div>
-                        <div className="space-y-2">
-                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-4 w-28" />
                             <Skeleton className="h-10 w-full" />
                         </div>
                         <div className="space-y-2">
                             <Skeleton className="h-4 w-32" />
+                            <Skeleton className="h-10 w-full" />
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Skeleton className="h-4 w-44" />
+                        <Skeleton className="h-10 w-full" />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Skeleton className="h-4 w-28" />
+                        <Skeleton className="h-10 w-full" />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Skeleton className="h-4 w-16" />
                             <Skeleton className="h-10 w-full" />
                         </div>
                         <div className="space-y-2">
@@ -33,8 +46,14 @@ export function ProductFormEditorSkeleton() {
                             <Skeleton className="h-10 w-full" />
                         </div>
                     </div>
-                    <div className="pt-4 flex justify-end">
-                        <Skeleton className="h-10 w-32" />
+
+                    <div className="flex items-center gap-2 pt-2">
+                        <Skeleton className="h-4 w-4 rounded" />
+                        <Skeleton className="h-4 w-72" />
+                    </div>
+
+                    <div className="pt-4 flex justify-end border-t border-slate-100">
+                        <Skeleton className="h-10 w-44" />
                     </div>
                 </div>
             </div>

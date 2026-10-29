@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using partcom.Domain.Common;
 using partcom.Application.Common;
+using System.Security.Claims;
 
 public static class ProductEndpoints
 {
@@ -16,10 +17,19 @@ public static class ProductEndpoints
         var group = app.MapGroup("/api/products")
                        .WithTags("Products");
 
-        group.MapGet("/{id:guid}", async (Guid id, IProductService productService, CancellationToken ct) =>
+        group.MapGet("/{id:guid}", async (Guid id, ClaimsPrincipal user, IProductService productService, CancellationToken ct) =>
         {
             var product = await productService.GetByIdAsync(id, ct);
-            return product is not null ? Results.Ok(product) : Results.NotFound();
+
+            if (product is null)
+                return Results.NotFound();
+
+            if (!product.IsPublished && !user.IsInRole("ADMIN"))
+            {
+                return Results.NotFound();
+            }
+
+            return Results.Ok(product);
         });
 
         group.MapPost("/", async (CreateProductDto dto, IProductService productService, CancellationToken ct) =>
@@ -174,10 +184,24 @@ public static class ProductEndpoints
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         [FromQuery] bool? hasCategory = null,
+        [FromQuery] PublicationFilter publicationFilter = PublicationFilter.OnlyPublished,
+        ClaimsPrincipal user = null!,
         IProductService productService = null!,
         CancellationToken ct = default)
     {
-        var result = await productService.SearchAsync(query, categorySlug, page, pageSize, hasCategory, ct);
+        if (!user.IsInRole("ADMIN"))
+        {
+            publicationFilter = PublicationFilter.OnlyPublished;
+        }
+
+        var result = await productService.SearchAsync(
+            query,
+            categorySlug,
+            page,
+            pageSize,
+            hasCategory,
+            publicationFilter,
+            ct);
         return Results.Ok(result);
     }
 

@@ -26,7 +26,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                         <span className="font-semibold text-primary">
                             {product.brand}
                         </span>
-                        <span className="font-mono">{product.itemNumber}</span>
+                        <span className="font-mono">{product.displayItemNumber}</span>
                     </div>
                     <CardTitle className="text-sm font-medium group-hover:text-primary transition-colors line-clamp-2">
                         {product.name}

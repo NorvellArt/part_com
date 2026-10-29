@@ -5,6 +5,8 @@ public class Product
     public Guid Id { get; set; }
     public string Brand { get; set; } = string.Empty;
     public string ItemNumber { get; set; } = string.Empty;
+    public string DisplayItemNumber { get; set; } = string.Empty;
+    public bool IsPublished { get; set; }
     public string Name { get; set; } = string.Empty;
     public decimal Price { get; set; }
     public int Quantity { get; set; }
@@ -15,25 +17,53 @@ public class Product
 
     private Product() { }
 
-    public Product(string brand, string itemNumber, string name, decimal price, int quantity, string? imageUrl = null)
+    public Product(
+        string brand,
+        string itemNumber,
+        string displayItemNumber,
+        string name,
+        decimal price,
+        int quantity,
+        string? imageUrl = null)
     {
         Id = Guid.NewGuid();
-        Update(brand, itemNumber, name, price, quantity, imageUrl);
+        IsPublished = false;
+        Update(brand, itemNumber, displayItemNumber, name, price, quantity, imageUrl);
     }
 
-    public Product(Guid id, string brand, string itemNumber, string name, decimal price, int quantity, string? imageUrl = null)
+    public Product(
+        Guid id,
+        string brand,
+        string itemNumber,
+        string displayItemNumber,
+        string name,
+        decimal price,
+        int quantity,
+        bool isPublished,
+        string? imageUrl = null)
     {
         Id = id;
-        Update(brand, itemNumber, name, price, quantity, imageUrl);
+        IsPublished = isPublished;
+        Update(brand, itemNumber, displayItemNumber, name, price, quantity, imageUrl);
     }
 
-    public void Update(string brand, string itemNumber, string name, decimal price, int quantity, string? imageUrl = null)
+    public void Update(
+        string brand,
+        string itemNumber,
+        string displayItemNumber,
+        string name,
+        decimal price,
+        int quantity,
+        string? imageUrl = null)
     {
         if (string.IsNullOrWhiteSpace(brand))
             throw new ArgumentException("Бренд не может быть пустым.", nameof(brand));
 
         if (string.IsNullOrWhiteSpace(itemNumber))
-            throw new ArgumentException("Артикул не может быть пустым.", nameof(itemNumber));
+            throw new ArgumentException("Внутренний артикул не может быть пустым.", nameof(itemNumber));
+
+        if (string.IsNullOrWhiteSpace(displayItemNumber))
+            throw new ArgumentException("Отображаемый артикул не может быть пустым.", nameof(displayItemNumber));
 
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Наименование не может быть пустым.", nameof(name));
@@ -46,10 +76,14 @@ public class Product
 
         Brand = brand;
         ItemNumber = itemNumber;
+        DisplayItemNumber = displayItemNumber;
         Name = name;
         Price = price;
         Quantity = quantity;
     }
+
+    public void Publish() => IsPublished = true;
+    public void Unpublish() => IsPublished = false;
 
     public void ChangeImage(string imageUrl)
     {

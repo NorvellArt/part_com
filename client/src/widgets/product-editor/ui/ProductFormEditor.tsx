@@ -43,9 +43,11 @@ export function ProductFormEditor({
     const initialFieldsData = {
         brand: product.brand ?? '',
         itemNumber: product.itemNumber ?? '',
+        displayItemNumber: product.displayItemNumber ?? '',
         name: product.name ?? '',
         price: product.price ?? 0,
         quantity: product.quantity ?? 0,
+        isPublished: product.isPublished ?? false,
         imageUrl: product.imageUrl ?? '',
     };
 

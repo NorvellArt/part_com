@@ -16,6 +16,7 @@ public interface IProductService
     int page = 1,
     int pageSize = 20,
     bool? hasCategory = null,
+    PublicationFilter publicationFilter = PublicationFilter.OnlyPublished,
     CancellationToken cancellationToken = default);
 
     Task<Result<(int InsertedCount, int UpdatedCount)>> ImportFromExcelAsync(

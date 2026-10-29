@@ -65,7 +65,14 @@ public class ExcelProductParser : IExcelProductParser
             decimal price = ConvertToDecimal(reader.GetValue(3));
             int quantity = ConvertToInt(reader.GetValue(4));
 
-            var product = new Product(brand, itemNumber, name, price, quantity);
+            var product = new Product(
+                brand: brand,
+                itemNumber: itemNumber,
+                displayItemNumber: itemNumber,
+                name: name,
+                price: price,
+                quantity: quantity);
+                
             products.Add(product);
         }
 

@@ -16,6 +16,7 @@ import { PackageOpen, Loader2 } from 'lucide-react';
 import { ModerationToolbar } from './ModerationToolbar';
 import { ModerationRow } from './ModerationRow';
 import { Pagination } from '@/features/pagination';
+import { PublicationFilter } from '@/entities/product/model/types';
 
 export function ProductModerationTable() {
     const searchParams = useSearchParams();
@@ -29,14 +30,29 @@ export function ProductModerationTable() {
         (searchParams.has('query') || searchParams.has('page')
             ? 'all'
             : 'false');
+    const publicationFilterFromUrl =
+        Number(searchParams.get('publicationFilter')) || PublicationFilter.All;
 
-    const [selectValue, setSelectValue] = useState(hasCategoryFromUrl);
+    const [categoryValue, setCategoryValue] = useState(hasCategoryFromUrl);
+    const [filterValue, setFilterValue] = useState(publicationFilterFromUrl);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
     useEffect(() => {
-        setSelectValue(hasCategoryFromUrl);
+        setCategoryValue(hasCategoryFromUrl);
     }, [hasCategoryFromUrl]);
 
-    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    useEffect(() => {
+        setFilterValue(publicationFilterFromUrl);
+    }, [publicationFilterFromUrl]);
+
+    useEffect(() => {
+        setSelectedIds([]);
+    }, [
+        pageFromUrl,
+        queryFromUrl,
+        hasCategoryFromUrl,
+        publicationFilterFromUrl,
+    ]);
 
     const getHasCategoryApiValue = () => {
         if (hasCategoryFromUrl === 'true') return true;
@@ -49,28 +65,39 @@ export function ProductModerationTable() {
         page: pageFromUrl,
         pageSize: 10,
         hasCategory: getHasCategoryApiValue(),
+        publicationFilter: publicationFilterFromUrl,
     });
 
     useEffect(() => {
         setSelectedIds([]);
-    }, [pageFromUrl, queryFromUrl, hasCategoryFromUrl]);
+    }, [
+        pageFromUrl,
+        queryFromUrl,
+        hasCategoryFromUrl,
+        publicationFilterFromUrl,
+    ]);
 
     const updateUrlParams = (updates: {
         query?: string;
         hasCategory?: string;
         page?: number;
+        publicationFilter?: PublicationFilter;
     }) => {
         const params = new URLSearchParams(searchParams.toString());
 
         const targetHasCategory =
             updates.hasCategory !== undefined
                 ? updates.hasCategory
-                : selectValue;
-
+                : categoryValue;
         if (targetHasCategory === 'all') {
             params.delete('hasCategory');
         } else {
             params.set('hasCategory', targetHasCategory);
+        }
+
+        if (updates.hasCategory !== undefined) {
+            setCategoryValue(updates.hasCategory);
+            params.set('page', '1');
         }
 
         if (updates.query !== undefined) {
@@ -82,8 +109,18 @@ export function ProductModerationTable() {
             params.set('page', '1');
         }
 
-        if (updates.hasCategory !== undefined) {
-            setSelectValue(updates.hasCategory);
+        const targetPublicationFilter =
+            updates.publicationFilter !== undefined
+                ? updates.publicationFilter
+                : filterValue;
+        if (targetPublicationFilter === PublicationFilter.All) {
+            params.delete('publicationFilter');
+        } else {
+            params.set('publicationFilter', targetPublicationFilter.toString());
+        }
+
+        if (updates.publicationFilter !== undefined) {
+            setFilterValue(updates.publicationFilter);
             params.set('page', '1');
         }
 
@@ -91,7 +128,7 @@ export function ProductModerationTable() {
             params.set('page', updates.page.toString());
         }
 
-        router.push(`?${params.toString()}`);
+        router.push(`?${params.toString()}`, { scroll: false });
     };
 
     const items = pagedResult?.items ?? [];
@@ -127,11 +164,15 @@ export function ProductModerationTable() {
                 totalCount={pagedResult?.totalCount ?? 0}
                 selectedIds={selectedIds}
                 onClearSelection={() => setSelectedIds([])}
-                currentHasCategory={selectValue}
+                currentHasCategory={categoryValue}
                 onHasCategoryChange={(val) =>
                     updateUrlParams({ hasCategory: val })
                 }
                 onSearch={(q) => updateUrlParams({ query: q })}
+                publicationFilter={filterValue}
+                onPublicationFilterChange={(filterVal) =>
+                    updateUrlParams({ publicationFilter: filterVal })
+                }
             />
 
             <div className="w-full overflow-auto">

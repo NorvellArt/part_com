@@ -31,6 +31,7 @@ public class ProductService(
         var product = new Product(
             dto.Brand,
             dto.ItemNumber,
+            dto.DisplayItemNumber,
             dto.Name,
             dto.Price,
             dto.Quantity
@@ -47,7 +48,16 @@ public class ProductService(
         if (product is null)
             return false;
 
-        product.Update(dto.Brand, dto.ItemNumber, dto.Name, dto.Price, dto.Quantity);
+        product.Update(dto.Brand, dto.ItemNumber, dto.DisplayItemNumber, dto.Name, dto.Price, dto.Quantity);
+        if (dto.IsPublished)
+        {
+            product.Publish();
+        }
+        else
+        {
+            product.Unpublish();
+        }
+
         await _productRepository.UpdateAsync(product, cancellationToken);
         await _productRepository.SaveChangesAsync(cancellationToken);
         return true;
@@ -77,12 +87,20 @@ public class ProductService(
     int page = 1,
     int pageSize = 20,
     bool? hasCategory = null,
+    PublicationFilter publicationFilter = PublicationFilter.OnlyPublished,
     CancellationToken cancellationToken = default)
     {
         page = page < 1 ? 1 : page;
         pageSize = pageSize < 1 ? 20 : (pageSize > 100 ? 100 : pageSize);
 
-        var pagedProducts = await _productRepository.SearchAsync(query, categorySlug, page, pageSize, hasCategory, cancellationToken);
+        var pagedProducts = await _productRepository.SearchAsync(
+            query,
+            categorySlug,
+            page,
+            pageSize,
+            hasCategory,
+            publicationFilter,
+            cancellationToken);
 
         var dtos = pagedProducts.Items
             .Select(MapToDto)
@@ -142,11 +160,13 @@ public class ProductService(
             {
                 var brand = parsedProduct.Brand;
                 var itemNumber = parsedProduct.ItemNumber;
+                var displayItemNumber = existingProduct.DisplayItemNumber;
+
                 var name = settings.DisabledColumnsForUpdate.Contains("НАИМЕНОВАНИЕ") ? existingProduct.Name : parsedProduct.Name;
                 var price = settings.DisabledColumnsForUpdate.Contains("ЦЕНА") ? existingProduct.Price : parsedProduct.Price;
                 var quantity = settings.DisabledColumnsForUpdate.Contains("НАЛИЧИЕ") ? existingProduct.Quantity : parsedProduct.Quantity;
 
-                existingProduct.Update(brand, itemNumber, name, price, quantity);
+                existingProduct.Update(brand, itemNumber, displayItemNumber, name, price, quantity);
 
                 productsToUpdate[currentKey] = existingProduct;
             }
@@ -225,12 +245,14 @@ public class ProductService(
         product.Id,
         product.Brand,
         product.ItemNumber,
+        product.DisplayItemNumber,
         product.Name,
         product.Price,
         product.Quantity,
         product.ImageUrl,
         product.CategoryId,
-        product.Category?.Name
+        product.Category?.Name,
+        product.IsPublished
     );
 
     public async Task<Result<string>> UploadImageAsync(

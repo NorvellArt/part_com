@@ -273,8 +273,18 @@ namespace partcom.Infrastructure.Migrations
                     b.Property<Guid?>("CategoryId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("DisplayItemNumber")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("ImageUrl")
                         .HasColumnType("text");
+
+                    b.Property<bool>("IsPublished")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<string>("ItemNumber")
                         .IsRequired()
@@ -297,10 +307,12 @@ namespace partcom.Infrastructure.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.HasIndex("ItemNumber");
+                    b.HasIndex("DisplayItemNumber");
 
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("ItemNumber"), "gin");
-                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("ItemNumber"), new[] { "gin_trgm_ops" });
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("DisplayItemNumber"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("DisplayItemNumber"), new[] { "gin_trgm_ops" });
+
+                    b.HasIndex("IsPublished");
 
                     b.HasIndex("Name");
 

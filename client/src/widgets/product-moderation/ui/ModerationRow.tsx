@@ -31,14 +31,23 @@ export function ModerationRow({
             <TableCell className="h-11 w-12 px-4 text-center">
                 <Checkbox checked={isSelected} />
             </TableCell>
+            
             <TableCell className="py-3 px-4 font-mono">
-                <div className="font-bold text-slate-900">
-                    {product.itemNumber}
+                <div className="font-bold text-slate-900" title="Артикул для пользователей">
+                    {product.displayItemNumber || product.itemNumber}
                 </div>
-                <div className="text-[10px] text-slate-400 uppercase font-sans tracking-wide mt-0.5">
+                
+                {product.displayItemNumber && product.displayItemNumber !== product.itemNumber && (
+                    <div className="text-[11px] text-slate-500 font-medium mt-0.5" title="Внутренний артикул">
+                        исх: {product.itemNumber}
+                    </div>
+                )}
+                
+                <div className="text-[10px] text-slate-400 uppercase font-sans tracking-wide mt-1">
                     {product.brand}
                 </div>
             </TableCell>
+            
             <TableCell className="py-3 px-4 max-w-xs font-medium text-slate-800">
                 <div
                     className="line-clamp-2"
@@ -47,9 +56,11 @@ export function ModerationRow({
                     {product.name}
                 </div>
             </TableCell>
+            
             <TableCell className="py-3 px-4 text-right font-bold text-slate-900">
                 {product.price.toLocaleString()} ₽
             </TableCell>
+            
             <TableCell className="py-3 px-4 text-center">
                 <span
                     className={cn(
@@ -62,9 +73,23 @@ export function ModerationRow({
                     {product.quantity} шт
                 </span>
             </TableCell>
-            <TableCell className="py-3 px-4 text-center font-medium text-slate-800">
-                {product.categoryName || '—'}
+            
+            <TableCell className="py-3 px-4 text-center">
+                <div className="font-medium text-slate-800 mb-1">
+                    {product.categoryName || '—'}
+                </div>
+                <span
+                    className={cn(
+                        'px-2 py-0.5 rounded font-medium text-[9px] inline-block uppercase tracking-wider',
+                        product.isPublished
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : 'bg-slate-100 text-slate-600',
+                    )}
+                >
+                    {product.isPublished ? 'На сайте' : 'Черновик'}
+                </span>
             </TableCell>
+            
             <TableCell className="h-11 px-4 text-center w-12">
                 <ProductEditButton productId={product.id} />
             </TableCell>

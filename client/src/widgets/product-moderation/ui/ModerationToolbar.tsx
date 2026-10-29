@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, X, Trash2 } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { Input, Button } from '@/shared/components';
 import { ExcelImportButton } from '@/features/import-excel';
 import { BulkCategoryAssignSelect } from '@/features/assign-product-category';
+import { PublicationFilter } from '@/entities/product/model/types';
 
 interface ModerationToolbarProps {
     totalCount: number;
@@ -13,6 +14,8 @@ interface ModerationToolbarProps {
     onClearSelection: () => void;
     currentHasCategory: string;
     onHasCategoryChange: (value: string) => void;
+    publicationFilter: PublicationFilter;
+    onPublicationFilterChange: (value: PublicationFilter) => void;
 }
 
 export function ModerationToolbar({
@@ -22,6 +25,8 @@ export function ModerationToolbar({
     onClearSelection,
     currentHasCategory,
     onHasCategoryChange,
+    publicationFilter,
+    onPublicationFilterChange,
 }: ModerationToolbarProps) {
     const [searchQuery, setSearchQuery] = useState('');
     const hasSelection = selectedIds.length > 0;
@@ -95,6 +100,30 @@ export function ModerationToolbar({
                                 <option value="false">Без категории</option>
                                 <option value="true">С категорией</option>
                                 <option value="all">Все товары</option>
+                            </select>
+
+                            <select
+                                value={publicationFilter}
+                                onChange={(e) =>
+                                    onPublicationFilterChange(
+                                        Number(
+                                            e.target.value,
+                                        ) as PublicationFilter,
+                                    )
+                                }
+                                className="h-9 px-3 rounded-xl bg-white border border-slate-200 text-xs font-medium text-slate-700 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 cursor-pointer"
+                            >
+                                <option value={PublicationFilter.All}>
+                                    Все товары
+                                </option>
+                                <option value={PublicationFilter.OnlyPublished}>
+                                    На сайте
+                                </option>
+                                <option
+                                    value={PublicationFilter.OnlyUnpublished}
+                                >
+                                    Черновики
+                                </option>
                             </select>
                         </div>
                     </div>

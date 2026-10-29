@@ -8,9 +8,11 @@ import { Button, Input, Label } from '@/shared/components';
 interface ProductFormValues {
     brand: string;
     itemNumber: string;
+    displayItemNumber: string;
     name: string;
     price: number;
     quantity: number;
+    isPublished: boolean;
 }
 
 interface ProductFieldsEditorProps {
@@ -43,6 +45,8 @@ export function ProductFieldsEditor({
         initialData.quantity,
         initialData.brand,
         initialData.itemNumber,
+        initialData.displayItemNumber,
+        initialData.isPublished,
         reset,
     ]);
 
@@ -90,7 +94,7 @@ export function ProductFieldsEditor({
                         htmlFor="itemNumber"
                         className="text-slate-600"
                     >
-                        Артикул
+                        Внутренний артикул
                     </Label>
                     <Input
                         id="itemNumber"
@@ -99,6 +103,20 @@ export function ProductFieldsEditor({
                         {...register('itemNumber')}
                     />
                 </div>
+            </div>
+
+            <div className="space-y-2">
+                <Label
+                    htmlFor="displayItemNumber"
+                    className="text-slate-600"
+                >
+                    Артикул для пользователей
+                </Label>
+                <Input
+                    id="displayItemNumber"
+                    required
+                    {...register('displayItemNumber')}
+                />
             </div>
 
             <div className="space-y-2">
@@ -146,6 +164,21 @@ export function ProductFieldsEditor({
                         {...register('quantity', { valueAsNumber: true })}
                     />
                 </div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+                <input
+                    type="checkbox"
+                    id="isPublished"
+                    className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                    {...register('isPublished')}
+                />
+                <Label
+                    htmlFor="isPublished"
+                    className="text-slate-600 font-normal cursor-pointer select-none"
+                >
+                    Опубликовать товар на сайте (обычные пользователи увидят его в каталоге)
+                </Label>
             </div>
 
             <div className="flex justify-end pt-4 border-t border-slate-100">

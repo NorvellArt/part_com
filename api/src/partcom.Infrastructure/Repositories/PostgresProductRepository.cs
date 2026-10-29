@@ -93,12 +93,21 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
         int page = 1,
         int pageSize = 20,
         bool? hasCategory = null,
+        PublicationFilter publicationFilter = PublicationFilter.OnlyPublished,
         CancellationToken ct = default)
     {
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 100);
 
         var dbQuery = _context.Products.Include(p => p.Category).AsNoTracking().AsQueryable();
+
+        dbQuery = publicationFilter switch
+        {
+            PublicationFilter.OnlyPublished => dbQuery.Where(p => p.IsPublished),
+            PublicationFilter.OnlyUnpublished => dbQuery.Where(p => !p.IsPublished),
+            PublicationFilter.All => dbQuery,
+            _ => dbQuery.Where(p => p.IsPublished)
+        };
 
         if (!string.IsNullOrWhiteSpace(categorySlug))
         {
@@ -173,11 +182,11 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
             {
                 Entity = p,
                 NameScore = EF.Functions.TrigramsWordSimilarity(cleanQuery, p.Name),
-                ArticleScore = EF.Functions.TrigramsWordSimilarity(cleanQuery, p.ItemNumber),
-                IsExactArticle = EF.Functions.ILike(p.ItemNumber, cleanQuery)
+                ArticleScore = EF.Functions.TrigramsWordSimilarity(cleanQuery, p.DisplayItemNumber),
+                IsExactArticle = EF.Functions.ILike(p.DisplayItemNumber, cleanQuery)
             })
             .Where(x => x.IsExactArticle ||
-                        EF.Functions.ILike(x.Entity.ItemNumber, wildCardQuery, escapeChar) ||
+                        EF.Functions.ILike(x.Entity.DisplayItemNumber, wildCardQuery, escapeChar) ||
                         EF.Functions.ILike(x.Entity.Name, wildCardQuery, escapeChar) ||
                         x.NameScore > 0.2f ||
                         x.ArticleScore > 0.2f);
@@ -275,10 +284,13 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
             id: entity.Id,
             brand: entity.Brand,
             itemNumber: entity.ItemNumber,
+            displayItemNumber: entity.DisplayItemNumber,
             name: entity.Name,
             price: entity.Price,
-            quantity: entity.Quantity
+            quantity: entity.Quantity,
+            isPublished: entity.IsPublished
         );
+
 
         if (!string.IsNullOrWhiteSpace(entity.ImageUrl))
         {
@@ -301,6 +313,8 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
             Id = product.Id,
             Brand = product.Brand,
             ItemNumber = product.ItemNumber,
+            DisplayItemNumber = product.DisplayItemNumber,
+            IsPublished = product.IsPublished,
             Name = product.Name,
             Price = product.Price,
             Quantity = product.Quantity,
@@ -319,5 +333,7 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
         entity.Quantity = product.Quantity;
         entity.ImageUrl = product.ImageUrl;
         entity.CategoryId = product.CategoryId;
+        entity.DisplayItemNumber = product.DisplayItemNumber;
+        entity.IsPublished = product.IsPublished;
     }
 }

@@ -26,7 +26,7 @@ export function ProductCardView({ productId }: ProductCardViewProps) {
                     <p className="text-sm text-muted-foreground mt-1">
                         Артикул:{' '}
                         <span className="font-mono font-medium">
-                            {product.itemNumber}
+                            {product.displayItemNumber}
                         </span>{' '}
                         | Бренд: {product.brand}
                     </p>
@@ -53,7 +53,7 @@ export function ProductCardView({ productId }: ProductCardViewProps) {
                         <div className="space-y-2">
                             <Label>Артикул (Номер детали)</Label>
                             <div className={`${valueStyle} font-mono`}>
-                                {product.itemNumber}
+                                {product.displayItemNumber}
                             </div>
                         </div>
                     </div>

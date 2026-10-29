@@ -17,13 +17,23 @@ export const productKeys = {
 };
 
 export const productApi = {
-    search: async ({ query, categorySlug, page = 1, pageSize = 20, hasCategory }: ProductSearchParams, signal?: AbortSignal) => {
+    search: async ({
+        query,
+        categorySlug,
+        page = 1,
+        pageSize = 20,
+        hasCategory,
+        publicationFilter
+    }: ProductSearchParams, signal?: AbortSignal) => {
         const params = new URLSearchParams();
 
         if (query) params.set('query', query);
         if (categorySlug) params.set('categorySlug', categorySlug);
         if (hasCategory !== undefined && hasCategory !== null) {
             params.set('hasCategory', hasCategory.toString());
+        }
+        if (publicationFilter !== undefined && publicationFilter !== null) {
+            params.set('publicationFilter', publicationFilter.toString());
         }
 
         params.set('page', page.toString());

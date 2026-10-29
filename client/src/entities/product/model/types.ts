@@ -2,9 +2,11 @@ export interface Product {
     id: string;
     brand: string;
     itemNumber: string;
+    displayItemNumber: string;
     name: string;
     price: number;
     quantity: number;
+    isPublished: boolean;
     imageUrl?: string | null;
 
     categoryId: string | null;
@@ -20,4 +22,11 @@ export interface ProductSearchParams {
     page?: number;
     pageSize?: number;
     hasCategory?: boolean;
+    publicationFilter?: PublicationFilter;
+}
+
+export enum PublicationFilter {
+    All = 0,
+    OnlyPublished = 1,
+    OnlyUnpublished = 2
 }

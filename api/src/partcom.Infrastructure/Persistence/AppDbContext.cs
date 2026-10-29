@@ -44,6 +44,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
             entity.Property(e => e.Brand).IsRequired().HasMaxLength(100);
             entity.Property(e => e.ItemNumber).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.DisplayItemNumber).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.IsPublished).IsRequired().HasDefaultValue(false);
             entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
             entity.Property(e => e.Price).HasPrecision(18, 2);
 
@@ -56,13 +58,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
             entity.HasIndex(e => new { e.ItemNumber, e.Brand }, "IX_Products_Lower_ItemNumber_Brand");
 
-            entity.HasIndex(e => e.ItemNumber)
+            entity.HasIndex(e => e.DisplayItemNumber)
                   .HasMethod("gin")
                   .HasOperators("gin_trgm_ops");
 
             entity.HasIndex(e => e.Name)
                   .HasMethod("gin")
                   .HasOperators("gin_trgm_ops");
+
+            entity.HasIndex(e => e.IsPublished);
         });
     }
 }

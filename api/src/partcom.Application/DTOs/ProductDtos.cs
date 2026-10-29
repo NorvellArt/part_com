@@ -4,17 +4,20 @@ public record ProductDto(
     Guid Id,
     string Brand,
     string ItemNumber,
+    string DisplayItemNumber,
     string Name,
     decimal Price,
     int Quantity,
     string? ImageUrl,
     Guid? CategoryId,
-    string? CategoryName
+    string? CategoryName,
+    bool IsPublished
 );
 
 public record CreateProductDto(
     string Brand,
     string ItemNumber,
+    string DisplayItemNumber,
     string Name,
     decimal Price,
     int Quantity,
@@ -24,8 +27,10 @@ public record CreateProductDto(
 public record UpdateProductDto(
     string Brand,
     string ItemNumber,
+    string DisplayItemNumber,
     string Name,
     decimal Price,
     int Quantity,
-    string? ImageUrl
+    string? ImageUrl,
+    bool IsPublished
 );
