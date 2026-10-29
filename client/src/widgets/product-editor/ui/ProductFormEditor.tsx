@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useProduct } from '@/entities/product';
 import { DeleteProductButton } from '@/features/delete-product';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
 import { ProductImageEditor } from './ProductImageEditor';
 import { ProductFieldsEditor } from './ProductFieldsEditor';
+import { ProductFormEditorSkeleton } from './ProductFormEditorSkeleton'; 
 
 interface ProductFormEditorProps {
     productId: string;
@@ -16,11 +17,20 @@ export function ProductFormEditor({
     productId,
     onSuccess,
 }: ProductFormEditorProps) {
-    const { data: product, isError, refetch } = useProduct(productId);
+    const {
+        data: product,
+        isLoading,
+        isError,
+        refetch,
+    } = useProduct(productId);
     const [statusMessage, setStatusMessage] = useState<{
         type: 'success' | 'error';
         text: string;
     } | null>(null);
+
+    if (isLoading) {
+        return <ProductFormEditorSkeleton />;
+    }
 
     if (isError || !product) {
         return (

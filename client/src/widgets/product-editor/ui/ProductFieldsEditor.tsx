@@ -1,19 +1,21 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { useUpdateProduct } from '@/features/edit-product';
 import { Button, Input, Label } from '@/shared/components';
 
+interface ProductFormValues {
+    brand: string;
+    itemNumber: string;
+    name: string;
+    price: number;
+    quantity: number;
+}
+
 interface ProductFieldsEditorProps {
     productId: string;
-    initialData: {
-        brand: string;
-        itemNumber: string;
-        name: string;
-        price: number;
-        quantity: number;
-        imageUrl: string;
-    };
+    initialData: ProductFormValues;
     onStatusChange: (
         status: { type: 'success' | 'error'; text: string } | null,
     ) => void;
@@ -28,25 +30,26 @@ export function ProductFieldsEditor({
 }: ProductFieldsEditorProps) {
     const { mutateAsync: updateProduct, isPending: isUpdating } =
         useUpdateProduct(productId);
-    const [formData, setFormData] = useState(initialData);
+
+    const { register, handleSubmit, reset } = useForm<ProductFormValues>({
+        defaultValues: initialData,
+    });
 
     useEffect(() => {
-        setFormData(initialData);
-    }, [initialData]);
+        reset(initialData);
+    }, [
+        initialData.name,
+        initialData.price,
+        initialData.quantity,
+        initialData.brand,
+        initialData.itemNumber,
+        reset,
+    ]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value, type } = e.target;
-        setFormData((prev) => ({
-            ...prev,
-            [name]: type === 'number' ? Number(value) : value,
-        }));
-    };
-
-    const handleSave = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const onSubmit = async (data: ProductFormValues) => {
         onStatusChange(null);
         try {
-            await updateProduct(formData);
+            await updateProduct(data);
             onStatusChange({
                 type: 'success',
                 text: 'Данные автозапчасти успешно обновлены',
@@ -64,7 +67,7 @@ export function ProductFieldsEditor({
 
     return (
         <form
-            onSubmit={handleSave}
+            onSubmit={handleSubmit(onSubmit)}
             className="space-y-4"
         >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -77,9 +80,9 @@ export function ProductFieldsEditor({
                     </Label>
                     <Input
                         id="brand"
-                        value={formData.brand}
                         disabled
                         className="bg-slate-50 border-slate-200 text-slate-500 cursor-not-allowed select-none"
+                        {...register('brand')}
                     />
                 </div>
                 <div className="space-y-2">
@@ -91,9 +94,9 @@ export function ProductFieldsEditor({
                     </Label>
                     <Input
                         id="itemNumber"
-                        value={formData.itemNumber}
                         disabled
                         className="bg-slate-50 border-slate-200 text-slate-500 cursor-not-allowed select-none"
+                        {...register('itemNumber')}
                     />
                 </div>
             </div>
@@ -107,10 +110,8 @@ export function ProductFieldsEditor({
                 </Label>
                 <Input
                     id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
                     required
+                    {...register('name')}
                 />
             </div>
 
@@ -124,12 +125,10 @@ export function ProductFieldsEditor({
                     </Label>
                     <Input
                         id="price"
-                        name="price"
                         type="number"
                         min="0"
-                        value={formData.price}
-                        onChange={handleChange}
                         required
+                        {...register('price', { valueAsNumber: true })}
                     />
                 </div>
                 <div className="space-y-2">
@@ -141,12 +140,10 @@ export function ProductFieldsEditor({
                     </Label>
                     <Input
                         id="quantity"
-                        name="quantity"
                         type="number"
                         min="0"
-                        value={formData.quantity}
-                        onChange={handleChange}
                         required
+                        {...register('quantity', { valueAsNumber: true })}
                     />
                 </div>
             </div>
