@@ -4,7 +4,7 @@ import {
     QueryClient,
 } from '@tanstack/react-query';
 import { productApi, productKeys } from '@/entities/product';
-import { ProductCardView } from '@/widgets/product-editor/ui/ProductCardView';
+import { ProductCardView } from '@/widgets/product-editor';
 import { buttonVariants } from '@/shared/components';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -23,7 +23,7 @@ export default async function ProductPage({ params }: Props) {
     });
 
     return (
-        <main className="container mx-auto p-6 max-w-4xl">
+        <>
             <Link
                 href="/"
                 className={buttonVariants({
@@ -40,6 +40,6 @@ export default async function ProductPage({ params }: Props) {
                     productId={id}
                 />
             </HydrationBoundary>
-        </main>
+        </>
     );
 }

@@ -97,7 +97,7 @@ export default async function MainLayout({
                 </div>
             </header>
 
-            <main className="flex-1 mx-auto max-w-7xl w-full px-4 py-6">
+            <main className="container mx-auto max-w-7xl p-6 w-full space-y-4">
                 {children}
             </main>
         </>

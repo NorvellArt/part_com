@@ -18,7 +18,7 @@ export default async function CatalogPage({ params, searchParams }: PageProps) {
     const page = Number(resolvedSearchParams.page) || 1;
 
     return (
-        <div className="w-full py-2 space-y-2">
+        <>
             {slugs.length > 0 && <Breadcrumbs slugs={slugs} />}
 
             <Suspense
@@ -35,6 +35,6 @@ export default async function CatalogPage({ params, searchParams }: PageProps) {
                     page={page}
                 />
             </Suspense>
-        </div>
+        </>
     );
 }
