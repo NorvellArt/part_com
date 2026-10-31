@@ -17,6 +17,7 @@ namespace partcom.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasAnnotation("Npgsql:CollationDefinition:ru_icu_ci", "ru-RU-u-ks-level2,ru-RU-u-ks-level2,icu,False")
                 .HasAnnotation("ProductVersion", "10.0.12")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
@@ -239,7 +240,8 @@ namespace partcom.Infrastructure.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasColumnType("character varying(255)")
+                        .UseCollation("ru_icu_ci");
 
                     b.Property<Guid?>("ParentId")
                         .HasColumnType("uuid");

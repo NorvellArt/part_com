@@ -15,6 +15,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     {
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.HasCollation("ru_icu_ci", locale: "ru-RU-u-ks-level2", provider: "icu", deterministic: false);
         modelBuilder.HasPostgresExtension("pg_trgm");
 
         modelBuilder.Entity<CategoryEntity>(entity =>
@@ -22,7 +23,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             entity.ToTable("Categories");
             entity.HasKey(e => e.Id);
 
-            entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.Name)
+                .UseCollation("ru_icu_ci")
+                .IsRequired()
+                .HasMaxLength(255);
             entity.Property(e => e.Slug).IsRequired().HasMaxLength(255);
             entity.Property(e => e.Level).IsRequired();
 

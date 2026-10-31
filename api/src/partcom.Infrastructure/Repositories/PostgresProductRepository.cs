@@ -155,7 +155,8 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
         {
             var totalCount = await dbQuery.CountAsync(ct);
             var defaultEntities = await dbQuery
-                .OrderBy(p => p.Id)
+                .OrderBy(p => p.Name)
+                .ThenBy(p => p.Id)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync(ct);
@@ -197,6 +198,7 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
         var entities = await scoredQuery
             .OrderByDescending(x => x.IsExactArticle)
             .ThenByDescending(x => Math.Max(x.NameScore, x.ArticleScore))
+            .ThenBy(x => x.Entity.Name)
             .ThenBy(x => x.Entity.Id)
             .Select(x => x.Entity)
             .Skip((page - 1) * pageSize)
