@@ -192,27 +192,6 @@ public class ProductService(
         return Result<(int, int)>.Success((productsToAdd.Count, productsToUpdate.Count));
     }
 
-    public async Task<bool> AssignCategoryAsync(Guid productId, Guid? categoryId, CancellationToken cancellationToken = default)
-    {
-        var product = await _productRepository.GetByIdAsync(productId, cancellationToken);
-        if (product is null) return false;
-
-        if (categoryId == null)
-        {
-            product.AssignCategory(null);
-        }
-        else
-        {
-            var category = await _categoryRepository.GetByIdAsync(categoryId.Value, cancellationToken)
-                ?? throw new ArgumentException("Категория не найдена");
-            product.AssignCategory(category);
-        }
-
-        await _productRepository.UpdateAsync(product, cancellationToken);
-        await _productRepository.SaveChangesAsync(cancellationToken);
-        return true;
-    }
-
     public async Task BulkAssignCategoryAsync(
         IEnumerable<Guid> productIds,
         Guid? categoryId,

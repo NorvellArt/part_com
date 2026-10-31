@@ -23,7 +23,6 @@ public interface IProductService
         Stream fileStream,
         ExcelImportSettings settings,
         CancellationToken cancellationToken = default);
-    Task<bool> AssignCategoryAsync(Guid productId, Guid? categoryId, CancellationToken cancellationToken = default);
     Task BulkAssignCategoryAsync(
         IEnumerable<Guid> productIds,
         Guid? categoryId,

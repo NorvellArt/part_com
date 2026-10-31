@@ -53,32 +53,6 @@ public static class ProductEndpoints
         group.MapGet("/search", SearchProducts)
              .Produces<PagedResult<ProductDto>>(StatusCodes.Status200OK);
 
-        group.MapPut("/{id:guid}/assign-category", async (
-            Guid id,
-            [FromBody] AssignCategoryRequest request,
-            IProductService productService,
-            CancellationToken ct) =>
-        {
-            try
-            {
-                var success = await productService.AssignCategoryAsync(id, request.CategoryId, ct);
-                return success ? Results.NoContent() : Results.NotFound();
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Results.BadRequest(new { error = ex.Message });
-            }
-            catch (ArgumentException ex)
-            {
-                return Results.BadRequest(new { error = ex.Message });
-            }
-        })
-        .WithName("AssignProductCategory")
-        .Produces(StatusCodes.Status204NoContent)
-        .Produces(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status404NotFound)
-        .RequireAuthorization();
-
         group.MapPost("/import", async (
             HttpContext context,
             IProductService productService,
