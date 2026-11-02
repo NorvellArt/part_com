@@ -5,6 +5,8 @@ import { Search, X } from 'lucide-react';
 import { Input, Button } from '@/shared/components';
 import { ExcelImportButton } from '@/features/import-excel';
 import { BulkCategoryAssignSelect } from '@/features/assign-product-category';
+import { BulkDeleteProductsButton } from '@/features/delete-product';
+import { BulkPublicationStatusSelect } from '@/features/edit-product';
 import { PublicationFilter } from '@/entities/product/model/types';
 
 interface ModerationToolbarProps {
@@ -39,7 +41,7 @@ export function ModerationToolbar({
     return (
         <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between gap-4 shrink-0 min-h-[68px]">
             {hasSelection ? (
-                <div className="flex items-center gap-3 w-full animate-in fade-in slide-in-from-top-1 duration-200">
+                <div className="flex items-center justify-between w-full animate-in fade-in slide-in-from-top-1 duration-200">
                     <div className="flex items-center gap-3">
                         <Button
                             type="button"
@@ -53,13 +55,25 @@ export function ModerationToolbar({
                         <div className="text-xs font-semibold text-slate-700 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg border border-blue-100">
                             Выбрано позиций: {selectedIds.length}
                         </div>
-                    </div>
 
-                    <div className="flex items-center gap-3">
-                        <BulkCategoryAssignSelect
-                            selectedIds={selectedIds}
-                            onSuccessAction={onClearSelection}
-                        />
+                        {/* Набор массовых действий над выбранными строками */}
+                        <div className="flex items-center gap-3 ml-2">
+                            <BulkCategoryAssignSelect
+                                selectedIds={selectedIds}
+                                onSuccessAction={onClearSelection}
+                            />
+
+                            {/* Новый селект изменения статуса */}
+                            <BulkPublicationStatusSelect
+                                selectedIds={selectedIds}
+                                onSuccessAction={onClearSelection}
+                            />
+
+                            <BulkDeleteProductsButton
+                                selectedIds={selectedIds}
+                                onSuccessAction={onClearSelection}
+                            />
+                        </div>
                     </div>
                 </div>
             ) : (

@@ -17,3 +17,21 @@ export function useDeleteProduct(id: string) {
         },
     });
 }
+
+export function useBulkDeleteProducts() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (productIds: string[]) =>
+            fetchApi<void>('/api/products/bulk-delete', {
+                method: 'POST',
+                body: JSON.stringify({ productIds }),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: productKeys.all });
+        },
+    });
+}

@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Routing;
 using partcom.Domain.Common;
 using partcom.Application.Common;
 using System.Security.Claims;
+using partcom.Application.Services;
 
 public static class ProductEndpoints
 {
@@ -107,6 +108,8 @@ public static class ProductEndpoints
         .RequireAuthorization();
 
         group.MapPut("/bulk-assign-category", BulkAssignCategoryAsync);
+        group.MapPost("/bulk-delete", BulkDeleteAsync);
+        group.MapPatch("/bulk-publish", BulkPublishAsync);
 
         group.MapPost("/{id:guid}/image", async (
             Guid id,
@@ -193,7 +196,39 @@ public static class ProductEndpoints
 
         return Results.NoContent();
     }
+
+    private static async Task<IResult> BulkDeleteAsync(
+        [FromBody] BulkDeleteRequest request,
+        [FromServices] IProductService productService,
+        CancellationToken cancellationToken)
+    {
+        if (request.ProductIds == null || !request.ProductIds.Any())
+        {
+            return Results.BadRequest("Список идентификаторов товаров (ProductIds) не может быть пустым.");
+        }
+
+        await productService.BulkDeleteAsync(request.ProductIds, cancellationToken);
+
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> BulkPublishAsync(
+        [FromBody] BulkPublishRequest request,
+        [FromServices] IProductService productService,
+        CancellationToken cancellationToken)
+    {
+        if (request.ProductIds == null || !request.ProductIds.Any())
+        {
+            return Results.BadRequest("Список идентификаторов товаров (ProductIds) не может быть пустым.");
+        }
+
+        await productService.BulkPublishAsync(request.ProductIds, request.IsPublished, cancellationToken);
+
+        return Results.NoContent();
+    }
 }
 
 public record AssignCategoryRequest(Guid? CategoryId);
 public record BulkAssignCategoryRequest(IEnumerable<Guid> ProductIds, Guid? CategoryId);
+public record BulkDeleteRequest(IEnumerable<Guid> ProductIds);
+public record BulkPublishRequest(IEnumerable<Guid> ProductIds, bool IsPublished);

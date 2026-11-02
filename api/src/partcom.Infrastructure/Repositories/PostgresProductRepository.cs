@@ -265,6 +265,15 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
         }
     }
 
+    public async Task BulkDeleteAsync(
+        IEnumerable<Guid> productIds,
+        CancellationToken cancellationToken)
+    {
+        await _context.Products
+            .Where(p => productIds.Contains(p.Id))
+            .ExecuteDeleteAsync(cancellationToken);
+    }
+
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         await _context.SaveChangesAsync(cancellationToken);

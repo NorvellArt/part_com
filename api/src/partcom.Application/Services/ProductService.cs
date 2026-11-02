@@ -219,6 +219,61 @@ public class ProductService(
         await _productRepository.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task BulkDeleteAsync(
+        IEnumerable<Guid> productIds,
+        CancellationToken cancellationToken)
+    {
+        if (productIds == null || !productIds.Any())
+        {
+            return;
+        }
+
+        var products = await _productRepository.GetByIdsAsync(productIds, cancellationToken);
+        if (!products.Any()) return;
+
+        var imagePathsToDelete = products
+            .Select(p => p.ImageUrl)
+            .Where(url => !string.IsNullOrWhiteSpace(url))
+            .ToList();
+
+        var existingIds = products.Select(p => p.Id).ToList();
+        await _productRepository.BulkDeleteAsync(existingIds, cancellationToken);
+
+        foreach (var imagePath in imagePathsToDelete)
+        {
+            _fileStorageService.DeleteFile(imagePath);
+        }
+    }
+
+    public async Task BulkPublishAsync(
+        IEnumerable<Guid> productIds,
+        bool isPublished,
+        CancellationToken cancellationToken)
+    {
+        if (productIds == null || !productIds.Any())
+        {
+            return;
+        }
+
+        var products = await _productRepository.GetByIdsAsync(productIds, cancellationToken);
+        if (!products.Any()) return;
+
+        foreach (var product in products)
+        {
+            if (isPublished)
+            {
+                product.Publish();
+            }
+            else
+            {
+                product.Unpublish();
+            }
+        }
+
+        await _productRepository.UpdateRangeAsync(products, cancellationToken);
+        await _productRepository.SaveChangesAsync(cancellationToken);
+    }
+
     private static ProductDto MapToDto(Product product) =>
     new(
         product.Id,

@@ -27,6 +27,13 @@ public interface IProductService
         IEnumerable<Guid> productIds,
         Guid? categoryId,
         CancellationToken cancellationToken = default);
+    Task BulkDeleteAsync(
+        IEnumerable<Guid> productIds,
+        CancellationToken cancellationToken = default);
+    Task BulkPublishAsync(
+        IEnumerable<Guid> productIds,
+        bool isPublished,
+        CancellationToken cancellationToken = default);
 
     Task<Result<string>> UploadImageAsync(Guid productId, Stream fileStream, string fileName, CancellationToken cancellationToken = default);
     Task<Result> DeleteImageAsync(Guid productId, CancellationToken cancellationToken = default);

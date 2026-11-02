@@ -49,7 +49,6 @@ export function useUploadProductImage(id: string) {
     });
 }
 
-// 3. Новый хук для полного удаления изображения товара
 export function useDeleteProductImage(id: string) {
     const queryClient = useQueryClient();
 
@@ -66,6 +65,24 @@ export function useDeleteProductImage(id: string) {
                     imageUrl: null,
                 };
             });
+            queryClient.invalidateQueries({ queryKey: productKeys.all });
+        },
+    });
+}
+
+export function useBulkPublishProducts() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ productIds, isPublished }: { productIds: string[]; isPublished: boolean }) =>
+            fetchApi<void>('/api/products/bulk-publish', {
+                method: 'PATCH',
+                body: JSON.stringify({ productIds, isPublished }),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            }),
+        onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: productKeys.all });
         },
     });
