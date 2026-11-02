@@ -1,0 +1,1 @@
+export { MobileHeader } from '@/widgets/header/ui/MobileHeader'

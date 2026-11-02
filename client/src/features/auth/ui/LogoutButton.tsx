@@ -1,19 +1,23 @@
 'use client';
 
 import { Loader2, LogOut } from 'lucide-react';
-import { Button } from '@/shared/components/ui/button';
 import { useLogout } from '@/features/auth/model/useLogout';
+import { DropdownMenuItem } from '@/shared/components/ui/dropdown-menu';
 
 export function LogoutButton() {
     const { logout, isPending } = useLogout();
 
     return (
-        <Button
-            onClick={() => logout()}
+        <DropdownMenuItem
+            onClick={(e) => {
+                if (isPending) {
+                    e.preventDefault();
+                    return;
+                }
+                logout();
+            }}
             disabled={isPending}
-            variant="outline"
-            size="sm"
-            className="gap-2"
+            className="cursor-pointer flex items-center gap-2 w-full"
         >
             {isPending ? (
                 <>
@@ -22,10 +26,10 @@ export function LogoutButton() {
                 </>
             ) : (
                 <>
-                    <LogOut className="h-4 w-4 text-muted-foreground" />
+                    <LogOut className="h-4 w-4" />
                     <span>Выйти</span>
                 </>
             )}
-        </Button>
+        </DropdownMenuItem>
     );
 }

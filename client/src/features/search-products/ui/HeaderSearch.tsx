@@ -11,7 +11,11 @@ import {
 } from '@/shared/components';
 import { Search, Loader2, X } from 'lucide-react';
 
-export function HeaderSearch() {
+interface HeaderSearchProps {
+    autoFocus?: boolean;
+}
+
+export function HeaderSearch({ autoFocus }: HeaderSearchProps) {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -21,6 +25,7 @@ export function HeaderSearch() {
     const [value, setValue] = useState(queryInUrl);
 
     const isFocused = useRef(false);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (!isFocused.current) {
@@ -61,6 +66,7 @@ export function HeaderSearch() {
         setValue('');
 
         const targetUrl = getTargetUrl('');
+        inputRef.current?.focus();
 
         startTransition(() => {
             router.push(targetUrl, { scroll: false });
@@ -81,6 +87,8 @@ export function HeaderSearch() {
                 <InputGroupInput
                     type="search"
                     placeholder="Поиск..."
+                    ref={inputRef}
+                    autoFocus={autoFocus}
                     value={value}
                     onChange={onChange}
                     onFocus={() => {
