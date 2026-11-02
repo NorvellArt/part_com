@@ -8,6 +8,7 @@ namespace partcom.Infrastructure.Persistence;
 public class AppDbContext(DbContextOptions<AppDbContext> options)
     : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options)
 {
+    public DbSet<UserSession> UserSessions => Set<UserSession>();
     public DbSet<ProductEntity> Products => Set<ProductEntity>();
     public DbSet<CategoryEntity> Categories => Set<CategoryEntity>();
 
@@ -17,6 +18,26 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
         modelBuilder.HasCollation("ru_icu_ci", locale: "ru-RU-u-ks-level2", provider: "icu", deterministic: false);
         modelBuilder.HasPostgresExtension("pg_trgm");
+
+        modelBuilder.Entity<UserSession>(entity =>
+        {
+            entity.ToTable("UserSessions");
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Token)
+                .IsRequired()
+                .HasMaxLength(128);
+
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.ExpiresAt).IsRequired();
+
+            entity.HasIndex(e => e.Token).IsUnique();
+
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
 
         modelBuilder.Entity<CategoryEntity>(entity =>
         {

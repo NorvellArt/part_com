@@ -19,12 +19,6 @@ public class SessionAuthenticationHandler(
     UserManager<ApplicationUser> userManager,
     AppDbContext dbContext) : AuthenticationHandler<SessionSchemeOptions>(options, logger, encoder)
 {
-    private readonly UserManager<ApplicationUser> _userManager = userManager;
-    private readonly AppDbContext _dbContext = dbContext;
-
-    private const string SessionProvider = "PartcomIdentitySession";
-    private const string SessionTokenName = "SessionId";
-
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
         if (!Request.Headers.TryGetValue("X-Session-Id", out var sessionIdValues))
@@ -38,29 +32,32 @@ public class SessionAuthenticationHandler(
             return AuthenticateResult.Fail("Пустой идентификатор сессии.");
         }
 
-        var userToken = await _dbContext.UserTokens
-            .FirstOrDefaultAsync(t => t.LoginProvider == SessionProvider &&
-                                      t.Name == SessionTokenName &&
-                                      t.Value == sessionId);
+        var session = await dbContext.UserSessions
+            .FirstOrDefaultAsync(s => s.Token == sessionId, Context.RequestAborted);
 
-        if (userToken == null)
+        if (session == null)
         {
-            return AuthenticateResult.Fail("Сессия не найдена или недействительна.");
+            return AuthenticateResult.Fail("Сессия не найдена.");
         }
 
-        var appUser = await _userManager.FindByIdAsync(userToken.UserId.ToString());
+        if (session.ExpiresAt < DateTime.UtcNow)
+        {
+            return AuthenticateResult.Fail("Срок действия сессии истек.");
+        }
+
+        var appUser = await userManager.FindByIdAsync(session.UserId.ToString());
         if (appUser == null)
         {
             return AuthenticateResult.Fail("Пользователь не найден.");
         }
 
-        var roles = await _userManager.GetRolesAsync(appUser);
+        var roles = await userManager.GetRolesAsync(appUser);
 
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, appUser.Id.ToString()),
             new(ClaimTypes.Email, appUser.Email ?? string.Empty),
-            new(ClaimTypes.Name, appUser.UserName ?? string.Empty)
+            new(ClaimTypes.Name, appUser.UserName ?? string.Empty),
         };
 
         claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));

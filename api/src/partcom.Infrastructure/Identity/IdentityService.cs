@@ -13,11 +13,10 @@ public class IdentityService(
 {
     private readonly UserManager<ApplicationUser> _userManager = userManager;
     private readonly AppDbContext _dbContext = dbContext;
-    private const string SessionProvider = "PartcomIdentitySession";
-    private const string SessionTokenName = "SessionId";
+    private const int SessionLifetimeDays = 30;
 
     public async Task<Result<AuthResponse>> RegisterAsync(
-        RegisterRequest request, 
+        RegisterRequest request,
         CancellationToken cancellationToken = default)
     {
         var existingUser = await _userManager.FindByEmailAsync(request.Email);
@@ -46,7 +45,7 @@ public class IdentityService(
     }
 
     public async Task<Result<AuthResponse>> LoginAsync(
-        LoginRequest request, 
+        LoginRequest request,
         CancellationToken cancellationToken = default)
     {
         var appUser = await _userManager.FindByEmailAsync(request.Email);
@@ -65,20 +64,18 @@ public class IdentityService(
     }
 
     public async Task<Result> RevokeSessionAsync(
-        string sessionId, 
+        string sessionId,
         CancellationToken cancellationToken = default)
     {
-        var userToken = await _dbContext.UserTokens
-            .FirstOrDefaultAsync(t => t.LoginProvider == SessionProvider && 
-                                      t.Name == SessionTokenName && 
-                                      t.Value == sessionId, cancellationToken);
+        var session = await _dbContext.UserSessions
+            .FirstOrDefaultAsync(s => s.Token == sessionId, cancellationToken);
 
-        if (userToken == null)
+        if (session == null)
         {
             return Result.Failure("Сессия не найдена или уже неактивна.");
         }
 
-        _dbContext.UserTokens.Remove(userToken);
+        _dbContext.UserSessions.Remove(session);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
@@ -89,14 +86,20 @@ public class IdentityService(
         CancellationToken cancellationToken)
     {
         var roles = await _userManager.GetRolesAsync(appUser);
-        
+
         var sessionId = Guid.NewGuid().ToString("N");
 
-        await _userManager.SetAuthenticationTokenAsync(
-            appUser, 
-            SessionProvider, 
-            SessionTokenName, 
-            sessionId);
+        var userSession = new UserSession
+        {
+            Id = Guid.NewGuid(),
+            Token = sessionId,
+            UserId = appUser.Id,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddDays(SessionLifetimeDays)
+        };
+
+        _dbContext.UserSessions.Add(userSession);
+        await _dbContext.SaveChangesAsync(cancellationToken);
 
         return Result<AuthResponse>.Success(new AuthResponse(
             UserId: appUser.Id,
