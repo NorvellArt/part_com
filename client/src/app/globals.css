@@ -1,10 +1,15 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+    --color-brand: var(--brand);
+    --color-brand-hover: var(--brand-hover);
+    --color-brand-active: var(--brand-active);
+    --color-brand-light: var(--brand-light);
+
     --font-heading: var(--font-sans);
     --font-sans: var(--font-sans);
     --color-sidebar-ring: var(--sidebar-ring);
@@ -48,6 +53,12 @@
 }
 
 :root {
+    /* Определяем значения для светлой темы */
+    --brand: #1a4f95;
+    --brand-hover: #143d75;
+    --brand-active: #0f2e59;
+    --brand-light: #e8eff8;
+
     --background: oklch(1 0 0);
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
@@ -83,6 +94,12 @@
 }
 
 .dark {
+    /* Значения для темной темы (адаптированные, инвертированные по яркости) */
+    --brand: #2b6dbf;
+    --brand-hover: #3782e6;
+    --brand-active: #4d91eb;
+    --brand-light: oklch(1 0 0 / 10%);
+
     --background: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);
     --card: oklch(0.205 0 0);

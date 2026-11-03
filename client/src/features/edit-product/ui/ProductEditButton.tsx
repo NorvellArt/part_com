@@ -17,7 +17,7 @@ export function ProductEditButton({ productId }: ProductEditButtonProps) {
             <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-slate-500 hover:text-blue-600"
+                className="h-8 w-8 text-slate-400 hover:text-brand hover:bg-brand-light/50 transition-colors"
                 onClick={(e) => {
                     e.stopPropagation();
                     setIsOpen(true);
