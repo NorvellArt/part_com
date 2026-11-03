@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { useCategoriesTree } from '@/entities/category';
 import { CategoryNode } from '@/entities/category/model/types';
@@ -23,6 +23,20 @@ export function HeaderCatalogDropdown() {
 
     const handleCloseMenu = () => setIsOpen(false);
 
+    // Закрытие меню при изменении размеров окна (resize)
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const handleResize = () => {
+            handleCloseMenu();
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
+    }, [isOpen]);
+
     return (
         <Popover
             open={isOpen}
@@ -30,27 +44,30 @@ export function HeaderCatalogDropdown() {
         >
             <PopoverTrigger
                 className={cn(
-                    'group inline-flex shrink-0 items-center justify-center gap-2 font-semibold h-10 px-4 rounded-xl shadow-sm transition-all text-sm border focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer',
+                    'group inline-flex shrink-0 items-center justify-center gap-2 font-medium h-10 px-4 rounded-xl shadow-[0_2px_8px_-3px_rgba(0,0,0,0.05)] transition-all duration-200 text-sm border focus:outline-none cursor-pointer select-none tracking-wide',
                     isOpen
-                        ? 'bg-blue-600 text-white border-transparent hover:bg-blue-700'
-                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50',
+                        ? 'bg-[#1a4f95] text-white border-transparent hover:bg-[#15417b]'
+                        : 'bg-white text-slate-600 border-slate-200/60 hover:bg-slate-50 hover:text-[#1a4f95] hover:border-slate-300',
                 )}
             >
-                {isOpen ? (
-                    <X className="h-4 w-4" />
-                ) : (
-                    <Menu className="h-4 w-4" />
-                )}
+                <div className="transition-transform duration-200 group-data-[state=open]:rotate-90">
+                    {isOpen ? (
+                        <X className="h-4 w-4" />
+                    ) : (
+                        <Menu className="h-4 w-4" />
+                    )}
+                </div>
                 <span>Каталог</span>
             </PopoverTrigger>
 
             <PopoverContent
                 align="start"
-                sideOffset={12}
-                className="w-[100%] p-0 border border-slate-200/80 rounded-2xl shadow-xl overflow-hidden bg-white z-50"
+                sideOffset={8}
+                // Задали жесткую ширину w-[920px] вместо w-[100%], чтобы геометрия не прыгала
+                className="w-[920px] max-w-[calc(100vw-32px)] p-0 border border-slate-200/60 rounded-2xl shadow-xl overflow-hidden bg-white z-50"
             >
                 {tree.length === 0 ? (
-                    <div className="p-12 text-center text-xs text-slate-400">
+                    <div className="p-12 text-center text-sm font-medium text-slate-400/80">
                         Каталог временно пуст.
                     </div>
                 ) : (

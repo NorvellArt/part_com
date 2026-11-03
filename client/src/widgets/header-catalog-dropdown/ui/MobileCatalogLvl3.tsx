@@ -20,19 +20,19 @@ export function MobileCatalogLvl3({
             <Link
                 href={`/catalog/${selectedRoot.slug}/${selectedLvl2.slug}`}
                 onClick={onClose}
-                className="flex items-center justify-between p-3 rounded-xl bg-slate-50 text-slate-900 text-xs font-bold mb-3 border border-slate-200/60"
+                className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50/80 hover:bg-slate-100/50 text-slate-800 hover:text-[#1a4f95] text-sm font-bold mb-4 border border-slate-200/60 transition-all group select-none"
             >
                 <span>Посмотреть подраздел: {selectedLvl2.name}</span>
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-[#1a4f95] group-hover:translate-x-0.5 transition-all shrink-0" />
             </Link>
 
-            <div className="border-l border-slate-100 pl-2 space-y-0.5">
+            <div className="border-l-2 border-slate-100 pl-3 space-y-1">
                 {selectedLvl2.children.map((lvl3) => (
                     <Link
                         key={lvl3.id}
                         href={`/catalog/${selectedRoot.slug}/${selectedLvl2.slug}/${lvl3.slug}`}
                         onClick={onClose}
-                        className="flex items-center p-2.5 text-xs text-slate-600 hover:text-blue-600 rounded-xl hover:bg-slate-50/50 transition-colors truncate block"
+                        className="flex items-center p-3 text-l text-slate-600 hover:text-[#256fc4] rounded-xl hover:bg-slate-50/60 transition-colors truncate block font-bold"
                     >
                         {lvl3.name}
                     </Link>

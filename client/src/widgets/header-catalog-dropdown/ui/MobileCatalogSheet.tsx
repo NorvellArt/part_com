@@ -1,4 +1,3 @@
-// @/widgets/header-catalog-dropdown/ui/MobileCatalogSheet.tsx
 'use client';
 
 import { useState } from 'react';
@@ -42,11 +41,11 @@ export function MobileCatalogSheet() {
 
             <SheetContent
                 side="left"
-                className="w-full sm:max-w-md p-0 flex flex-col h-full bg-white"
+                className="w-full sm:max-w-md p-0 border-r-0 flex flex-col h-full bg-white select-none"
             >
-                <SheetHeader className="p-4 border-b flex flex-row items-center gap-2 space-y-0 h-16 shrink-0">
-                    <SheetTitle className="text-left text-sm font-bold text-slate-900 flex items-center gap-2">
-                        <LayoutGrid className="h-4 w-4 text-blue-600" />
+                <SheetHeader className="p-4 border-b border-slate-100 flex flex-row items-center gap-2 space-y-0 h-16 shrink-0">
+                    <SheetTitle className="text-left text-sm font-bold text-slate-800 flex items-center gap-2 tracking-wide uppercase text-[11px] opacity-80">
+                        <LayoutGrid className="h-4 w-4 text-[#1a4f95]" />
                         <span>Разделы каталога</span>
                     </SheetTitle>
                 </SheetHeader>
@@ -55,7 +54,7 @@ export function MobileCatalogSheet() {
                     <Button
                         variant="outline"
                         size="sm"
-                        className="w-full justify-start gap-2 h-10 rounded-xl font-medium text-xs border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                        className="w-full justify-start gap-2 h-11 rounded-xl font-medium text-sm border-slate-200/60 text-slate-600 hover:bg-slate-50 transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
                         onClick={() => {
                             handleClose();
                             router.push('/catalog');
@@ -65,10 +64,10 @@ export function MobileCatalogSheet() {
                         <span>Все товары</span>
                     </Button>
 
-                    <Separator className="bg-slate-100" />
+                    <Separator className="bg-slate-100/80" />
 
                     {tree.length === 0 ? (
-                        <div className="p-4 text-center text-xs text-slate-400">
+                        <div className="p-8 text-center text-sm font-medium text-slate-400">
                             Каталог временно пуст.
                         </div>
                     ) : (
@@ -81,26 +80,25 @@ export function MobileCatalogSheet() {
                                     <Link
                                         href={`/catalog/${root.slug}`}
                                         onClick={handleClose}
-                                        className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-slate-900 font-bold text-xs hover:bg-slate-100/70 transition-colors group"
+                                        className="flex items-center justify-between p-3 rounded-xl bg-slate-50/70 border border-slate-100 text-slate-900 font-bold text-sm hover:bg-slate-100/50 hover:text-[#1a4f95] transition-colors group"
                                     >
                                         <span>{root.name}</span>
-                                        <ChevronRight className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-600 transition-colors" />
                                     </Link>
 
                                     {root.children &&
                                         root.children.length > 0 && (
-                                            <div className="pl-2 space-y-4 border-l-2 border-slate-100/80 ml-2">
+                                            <div className="pl-2 space-y-4 border-l border-slate-100/80 ml-2">
                                                 {root.children.map((lvl2) => (
                                                     <div
                                                         key={lvl2.id}
-                                                        className="space-y-1.5"
+                                                        className="space-y-1"
                                                     >
                                                         <Link
                                                             href={`/catalog/${root.slug}/${lvl2.slug}`}
                                                             onClick={
                                                                 handleClose
                                                             }
-                                                            className="text-[11px] font-bold text-slate-800 hover:text-blue-600 block px-2 py-0.5 transition-colors"
+                                                            className="text-xs font-bold text-slate-800 hover:text-[#1a4f95] block px-2 py-1 transition-colors leading-tight"
                                                         >
                                                             {lvl2.name}
                                                         </Link>
@@ -108,7 +106,7 @@ export function MobileCatalogSheet() {
                                                         {lvl2.children &&
                                                             lvl2.children
                                                                 .length > 0 && (
-                                                                <div className="pl-4 space-y-1">
+                                                                <div className="pl-2 space-y-0.5">
                                                                     {lvl2.children.map(
                                                                         (
                                                                             lvl3,
@@ -121,7 +119,7 @@ export function MobileCatalogSheet() {
                                                                                 onClick={
                                                                                     handleClose
                                                                                 }
-                                                                                className="text-[11px] text-slate-500 hover:text-blue-600 block py-1 px-2 rounded-lg hover:bg-slate-50/50 transition-all truncate"
+                                                                                className="text-xs text-slate-500 hover:text-[#256fc4] hover:bg-slate-50/80 block py-1.5 px-2 rounded-lg transition-all truncate leading-relaxed"
                                                                             >
                                                                                 {
                                                                                     lvl3.name
