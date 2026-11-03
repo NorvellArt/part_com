@@ -22,16 +22,20 @@ export const ProductImage: React.FC<ProductImageProps> = ({
     const safeSrc = src ?? '';
     const internalApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5286';
     const fullSrc = safeSrc.startsWith('/') ? `${internalApiUrl}${safeSrc}` : safeSrc;
-    console.log('fullSrc', fullSrc)
 
     if (!src || imageError) {
         return (
             <div
-                className={`relative flex flex-col items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 border border-slate-200/60 dark:border-slate-800 text-slate-400 select-none overflow-hidden ${className}`}
+                className={`relative z-20 aspect-[4/3] w-full flex flex-col items-center justify-center bg-slate-50 border-b border-slate-100 text-slate-400 select-none p-2 ${className}`}
             >
-                <Wrench className="w-8 h-8 opacity-40 mb-1 stroke-[1.5]" />
+                <div className="bg-white p-2 rounded-full border border-slate-100 shadow-sm mb-1 flex items-center justify-center">
+                    <Wrench className="w-4 h-4 opacity-60 text-slate-400 stroke-[1.5]" />
+                </div>
+                <span className="text-[10px] font-medium tracking-wide text-slate-400/80">
+                    Нет фото
+                </span>
                 {brand && (
-                    <span className="text-[10px] font-semibold uppercase tracking-wider opacity-60">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-primary/60 mt-0.5">
                         {brand}
                     </span>
                 )}
@@ -40,16 +44,14 @@ export const ProductImage: React.FC<ProductImageProps> = ({
     }
 
     return (
-        <div className={`relative overflow-hidden ${className}`}>
-            <Image
-                src={fullSrc}
-                alt={alt}
-                fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
-                onError={() => setImageError(true)}
-                unoptimized
-            />
-        </div>
+        <Image
+            src={fullSrc}
+            alt={alt}
+            width={400} 
+            height={300}
+            className={`relative z-20 aspect-[4/3] w-full object-cover ${className}`}
+            onError={() => setImageError(true)}
+            unoptimized
+        />
     );
 };

@@ -46,8 +46,9 @@ export default async function MainLayout({
                             href="/"
                             className="font-medium text-lg tracking-tight text-slate-900 select-none"
                         >
-                            <span>hdmarket</span>
-                            <span className="font-bold text-amber-600">52</span>
+                            <span className="font-bold text-[#1a4f95]">HD</span>
+                            <span>market</span>
+                            <span className="font-bold text-[#1a4f95]">52</span>
                         </Link>
 
                         <HydrationBoundary state={dehydrate(queryClient)}>

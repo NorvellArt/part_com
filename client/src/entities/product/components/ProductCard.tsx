@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Product, ProductImage } from '@/entities/product/index';
-import { Card, CardHeader, CardTitle, CardFooter } from '@/shared/components';
+import { Card } from '@/shared/components/ui/card';
 
 interface ProductCardProps {
     product: Product;
@@ -9,46 +9,57 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     return (
-        <Link
-            href={`/products/${product.id}`}
-            className="block group"
-        >
-            <Card className="h-full flex flex-col transition-all hover:shadow-md hover:border-primary/50 cursor-pointer">
+        <Card className="h-full flex flex-col relative group overflow-hidden border border-muted shadow-none bg-white rounded-xl pt-0 transition-all duration-300 hover:shadow-lg hover:border-primary/30">
+            <Link
+                href={`/products/${product.id}`}
+                className="flex flex-col flex-1"
+            >
                 <ProductImage
                     src={product.imageUrl}
                     alt={product.name}
                     brand={product.brand}
-                    className="w-full h-32 shrink-0"
                 />
+                <div className="pt-4 px-3 pb-0 flex-1 flex flex-col justify-between gap-3">
+                    <div className="space-y-1">
+                        <h3 className="text-[15px] font-semibold tracking-tight text-[#1a4f95] group-hover:text-[#256fc4] transition-colors line-clamp-2 leading-snug">
+                            {product.name}
+                        </h3>
 
-                <CardHeader className="p-3 flex-1">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                        <span className="font-semibold text-primary">
-                            {product.brand}
-                        </span>
-                        <span className="font-mono">{product.displayItemNumber}</span>
+                        <div className="text-xs text-muted-foreground space-y-0.5">
+                            <p>
+                                Артикул:{' '}
+                                <span className="font-medium text-foreground/80">
+                                    {product.displayItemNumber}
+                                </span>
+                            </p>
+                            <p className="truncate opacity-80">
+                                {product.brand}
+                            </p>
+                        </div>
                     </div>
-                    <CardTitle className="text-sm font-medium group-hover:text-primary transition-colors line-clamp-2">
-                        {product.name}
-                    </CardTitle>
-                </CardHeader>
-                <CardFooter className="p-3 pt-0 mt-auto flex items-center justify-between">
-                    <span className="text-base font-bold">
-                        {product.price.toLocaleString('ru-RU')} ₽
-                    </span>
-                    <span
-                        className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                            product.quantity > 0
-                                ? 'bg-emerald-500/10 text-emerald-600'
-                                : 'bg-destructive/10 text-destructive'
-                        }`}
-                    >
-                        {product.quantity > 0
-                            ? `${product.quantity} шт.`
-                            : 'Нет в наличии'}
-                    </span>
-                </CardFooter>
-            </Card>
-        </Link>
+
+                    <div className="flex items-center justify-between mt-auto">
+                        <span className="text-base font-black text-foreground tracking-tight">
+                            {product.price.toLocaleString('ru-RU')} ₽
+                        </span>
+
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+                            <span
+                                className={`h-2 w-2 rounded-full shrink-0 ${
+                                    product.quantity > 0
+                                        ? 'bg-emerald-500'
+                                        : 'bg-red-500'
+                                }`}
+                            />
+                            <span>
+                                {product.quantity > 0
+                                    ? 'В наличии'
+                                    : 'Нет в наличии'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </Link>
+        </Card>
     );
 };

@@ -51,8 +51,7 @@ export function MobileHeader({
                     href="/"
                     className="font-medium text-lg tracking-tight shrink-0 text-slate-900 select-none"
                 >
-                    <span>hdmarket</span>
-                    <span className="font-bold text-amber-600">52</span>
+                    <span className="font-bold text-[#1a4f95]">HD52</span>
                 </Link>
             </div>
 

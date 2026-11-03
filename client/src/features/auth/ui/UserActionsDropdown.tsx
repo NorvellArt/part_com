@@ -50,7 +50,7 @@ export function UserActionsDropdown({
         <DropdownMenu>
             <DropdownMenuTrigger
                 className={buttonVariants({
-                    variant: 'ghost',
+                    variant: 'secondary',
                     size: 'icon-lg',
                     className: 'rounded-full',
                 })}
