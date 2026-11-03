@@ -23,7 +23,6 @@ export function HeaderCatalogDropdown() {
 
     const handleCloseMenu = () => setIsOpen(false);
 
-    // Закрытие меню при изменении размеров окна (resize)
     useEffect(() => {
         if (!isOpen) return;
 
@@ -63,7 +62,6 @@ export function HeaderCatalogDropdown() {
             <PopoverContent
                 align="start"
                 sideOffset={8}
-                // Задали жесткую ширину w-[920px] вместо w-[100%], чтобы геометрия не прыгала
                 className="w-[920px] max-w-[calc(100vw-32px)] p-0 border border-slate-200/60 rounded-2xl shadow-xl overflow-hidden bg-white z-50"
             >
                 {tree.length === 0 ? (
