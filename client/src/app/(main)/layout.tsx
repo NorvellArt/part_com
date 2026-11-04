@@ -27,16 +27,6 @@ export default async function MainLayout({
         queryFn: ({ signal }) => categoryApi.getTree(signal),
     });
 
-    const searchLayout = (
-        <Suspense
-            fallback={
-                <div className="h-9 w-full bg-slate-100 rounded-md animate-pulse" />
-            }
-        >
-            <HeaderSearch />
-        </Suspense>
-    );
-
     return (
         <>
             <header className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur-md">

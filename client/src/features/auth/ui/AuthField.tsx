@@ -9,11 +9,26 @@ interface AuthFieldProps<T extends Record<string, any>> {
     name: Path<T>;
     label: string;
     control: Control<T>;
-    type?: 'email' | 'password';
+    type?: 'email' | 'password' | 'text' | 'tel';
     placeholder?: string;
     autoComplete?: string;
     disabled?: boolean;
 }
+
+const formatPhoneNumber = (value: string) => {
+    if (!value) return value;
+
+    const phoneNumber = value.replace(/\D/g, '');
+    const phoneNumberLength = phoneNumber.length;
+
+    if (phoneNumberLength < 2) return `+7`;
+    if (phoneNumberLength < 5) return `+7 (${phoneNumber.slice(1, 4)}`;
+    if (phoneNumberLength < 8)
+        return `+7 (${phoneNumber.slice(1, 4)}) ${phoneNumber.slice(4, 7)}`;
+    if (phoneNumberLength < 10)
+        return `+7 (${phoneNumber.slice(1, 4)}) ${phoneNumber.slice(4, 7)}-${phoneNumber.slice(7, 9)}`;
+    return `+7 (${phoneNumber.slice(1, 4)}) ${phoneNumber.slice(4, 7)}-${phoneNumber.slice(7, 9)}-${phoneNumber.slice(9, 11)}`;
+};
 
 export function AuthField<T extends Record<string, any>>({
     name,
@@ -36,6 +51,17 @@ export function AuthField<T extends Record<string, any>>({
                 const errorMessages =
                     fieldState.error?.message?.split('\n') || [];
 
+                const handleOnChange = (
+                    e: React.ChangeEvent<HTMLInputElement>,
+                ) => {
+                    if (type === 'tel') {
+                        const formatted = formatPhoneNumber(e.target.value);
+                        field.onChange(formatted);
+                    } else {
+                        field.onChange(e);
+                    }
+                };
+
                 return (
                     <Field
                         data-invalid={fieldState.invalid}
@@ -50,13 +76,16 @@ export function AuthField<T extends Record<string, any>>({
                         <div className="relative w-full">
                             <Input
                                 {...field}
+                                onChange={handleOnChange}
                                 id={`auth-${name}`}
-                                type={currentType}
+                                type={
+                                    currentType === 'tel' ? 'text' : currentType
+                                }
                                 aria-invalid={fieldState.invalid}
                                 placeholder={placeholder}
                                 autoComplete={autoComplete}
                                 disabled={disabled}
-                                className={`h-9 rounded-lg border-input bg-background text-sm shadow-sm transition-colors focus-visible:ring-1 focus-visible:ring-ring ${
+                                className={`h-9 rounded-lg border-input bg-background text-sm shadow-sm transition-colors focus-visible:ring-1 focus-visible:ring-[var(--brand)] focus-visible:border-[var(--brand)] ${
                                     isPasswordType ? 'pr-10' : 'px-3'
                                 }`}
                             />

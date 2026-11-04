@@ -1,8 +1,17 @@
 import { z } from 'zod';
 
+const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+
 export const registerSchema = z
     .object({
+        firstName: z.string().min(1, 'Имя обязательно для заполнения'),
         email: z.string().email('Некорректный формат email'),
+        phoneNumber: z
+            .string()
+            .min(1, 'Номер телефона обязателен для заполнения')
+            .refine((val) => val.replace(/\D/g, '').length === 11, {
+                message: 'Номер телефона должен состоять из 11 цифр',
+            }),
         password: z.string(),
         confirmPassword: z.string(),
     })

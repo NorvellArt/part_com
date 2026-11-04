@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using partcom.Application.DTOs.Auth;
 using partcom.Application.Interfaces;
 
+using System.ComponentModel.DataAnnotations;
+
 namespace partcom.Api.Endpoints;
 
 public static class UserEndpoints
@@ -41,6 +43,15 @@ public static class UserEndpoints
             HttpContext httpContext,
             CancellationToken ct) =>
         {
+            var validationContext = new ValidationContext(request);
+            var validationResults = new List<ValidationResult>();
+
+            if (!Validator.TryValidateObject(request, validationContext, validationResults, true))
+            {
+                var errors = validationResults.Select(r => r.ErrorMessage);
+                return Results.BadRequest(new { errors });
+            }
+
             var result = await identityService.RegisterAsync(request, ct);
             if (!result.IsSuccess || result.Value is null)
             {
@@ -51,6 +62,7 @@ public static class UserEndpoints
             {
                 userId = result.Value.UserId,
                 email = result.Value.Email,
+                phoneNumber = request.PhoneNumber,
                 roles = result.Value.Roles,
                 sessionId = result.Value.SessionId
             });

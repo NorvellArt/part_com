@@ -1,9 +1,9 @@
 import { Suspense } from 'react';
-import { RegisterForm } from '@/features/auth';
+import { LoginForm } from '@/features/auth';
 
-export default function RegisterPage() {
+export default function LoginPage() {
     return (
-        <main className="flex min-h-screen items-center justify-center p-4">
+        <div className="flex h-[calc(100dvh-64px)] items-center justify-center -mx-4 -my-4 md:-mx-6 md:-my-6 overflow-hidden">
             <Suspense
                 fallback={
                     <div className="text-sm text-slate-400 animate-pulse">
@@ -11,8 +11,8 @@ export default function RegisterPage() {
                     </div>
                 }
             >
-                <RegisterForm />
+                <LoginForm />
             </Suspense>
-        </main>
+        </div>
     );
 }

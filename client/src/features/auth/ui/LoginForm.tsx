@@ -41,7 +41,7 @@ export function LoginForm() {
 
     return (
         <Card className="w-full sm:w-[400px] shadow-lg border-muted/70 bg-card rounded-xl overflow-hidden">
-            <CardHeader className="space-y-1.5 pt-6 px-6 pb-4">
+            <CardHeader className="space-y-1.5 pt-2 px-3 pb-2">
                 <div className="flex items-center mb-1">
                     <Link
                         href="/"
@@ -49,25 +49,21 @@ export function LoginForm() {
                             variant: 'ghost',
                             size: 'sm',
                             className:
-                                'gap-1.5 text-xs text-muted-foreground hover:text-foreground px-2 py-1 h-auto rounded-md -ml-2',
+                                'gap-1.5 text-xs text-muted-foreground hover:text-[var(--brand-hover)] active:text-[var(--brand-active)] px-2 py-1 h-auto rounded-md',
                         })}
                     >
                         <ArrowLeft className="w-3.5 h-3.5" />
-                        На главную
+                        В Каталог
                     </Link>
                 </div>
-
                 <div className="space-y-1 text-center">
                     <CardTitle className="text-2xl font-semibold tracking-tight text-foreground">
                         Вход в систему
                     </CardTitle>
-                    <p className="text-xs text-muted-foreground">
-                        Введите свои данные для авторизации
-                    </p>
                 </div>
             </CardHeader>
 
-            <CardContent className="px-6 py-2">
+            <CardContent className="px-3">
                 <form
                     id="login-form"
                     onSubmit={form.handleSubmit(onSubmit)}
@@ -107,21 +103,20 @@ export function LoginForm() {
                 </form>
             </CardContent>
 
-            <CardFooter className="flex flex-col gap-3 px-6 pt-5 pb-6 border-t border-muted/50 bg-muted/20 mt-4">
+            <CardFooter className="flex flex-col gap-3 px-3 pt-2 pb-2 border-t border-muted/50 bg-[var(--brand-light)]/10">
                 <Button
                     type="submit"
                     form="login-form"
-                    className="w-full h-9 rounded-lg shadow-sm font-medium"
+                    className="w-full h-9 rounded-lg shadow-sm font-medium bg-[var(--brand)] hover:bg-[var(--brand-hover)] active:bg-[var(--brand-active)] text-white transition-colors"
                     disabled={isPending}
                 >
                     {isPending ? 'Выполняется вход...' : 'Войти'}
                 </Button>
-
                 <div className="text-xs text-muted-foreground text-center w-full">
-                    Нет аккаунта?{' '}
+                    Нет аккаунта?
                     <Link
                         href="/register"
-                        className="ml-1 text-primary underline-offset-4 hover:underline font-medium transition-colors"
+                        className="ml-1 text-[var(--brand)] hover:text-[var(--brand-hover)] active:text-[var(--brand-active)] underline-offset-4 hover:underline font-medium transition-colors"
                     >
                         Зарегистрироваться
                     </Link>

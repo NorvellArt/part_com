@@ -17,6 +17,8 @@ export interface LoginCredentialsDto {
 export interface RegisterCredentialsDto {
     email: string;
     password: string;
+    phoneNumber: string;
+    firstName: string;
 }
 
 declare module 'next-auth' {

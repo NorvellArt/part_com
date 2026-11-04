@@ -25,11 +25,22 @@ public class IdentityService(
             return Result<AuthResponse>.Failure("Пользователь с таким Email уже существует.");
         }
 
+        var phoneExists = await _userManager.Users
+            .AnyAsync(u => u.PhoneNumber == request.PhoneNumber, cancellationToken);
+
+        if (phoneExists)
+        {
+            return Result<AuthResponse>.Failure("Пользователь с таким номером телефона уже существует.");
+        }
+
         var appUser = new ApplicationUser
         {
             Id = Guid.NewGuid(),
             Email = request.Email,
             UserName = request.Email,
+            PhoneNumber = request.PhoneNumber,
+            FirstName = request.FirstName,
+            LastName = request.LastName
         };
 
         var result = await _userManager.CreateAsync(appUser, request.Password);
