@@ -5,9 +5,10 @@ import { ProductImage } from '@/entities/product';
 import {
     useUploadProductImage,
     useDeleteProductImage,
+    usePasteImage,
 } from '@/features/edit-product';
 import { Button, Label } from '@/shared/components';
-import { Upload, Trash2, Loader2 } from 'lucide-react';
+import { Upload, Trash2, Loader2, ClipboardPaste } from 'lucide-react';
 
 interface ProductImageEditorProps {
     productId: string;
@@ -34,12 +35,7 @@ export function ProductImageEditor({
         useDeleteProductImage(productId);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const isPending = isUploading || isDeleting;
-
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
+    const uploadFile = async (file: File) => {
         onStatusChange(null);
         const formDataFile = new FormData();
         formDataFile.append('file', file);
@@ -48,7 +44,7 @@ export function ProductImageEditor({
             await uploadImage(formDataFile);
             onStatusChange({
                 type: 'success',
-                text: 'Изображение товара успешно обновлено',
+                text: 'Изображение успешно обновлено',
             });
             onRefresh();
         } catch {
@@ -56,9 +52,22 @@ export function ProductImageEditor({
                 type: 'error',
                 text: 'Не удалось загрузить изображение',
             });
-        } finally {
-            if (fileInputRef.current) fileInputRef.current.value = '';
         }
+    };
+
+    const { pasteFromClipboard, isPasting } = usePasteImage({
+        onSuccess: uploadFile,
+        onError: (text) => onStatusChange({ type: 'error', text }),
+    });
+
+    const isPending = isUploading || isDeleting || isPasting;
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        await uploadFile(file);
+        if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
     const handleDelete = async () => {
@@ -68,13 +77,13 @@ export function ProductImageEditor({
             )
         )
             return;
-
         onStatusChange(null);
+
         try {
             await deleteImage();
             onStatusChange({
                 type: 'success',
-                text: 'Изображение товара успешно удалено',
+                text: 'Изображение успешно удалено',
             });
             onRefresh();
         } catch {
@@ -86,56 +95,82 @@ export function ProductImageEditor({
     };
 
     return (
-        <div className="space-y-3">
-            <Label className="block text-slate-600">Изображение товара</Label>
-
-            <div className="relative group rounded-lg overflow-hidden border bg-slate-50">
-                <ProductImage
-                    src={imageUrl}
-                    alt={productName}
-                    brand={productBrand}
-                    className="w-full h-52 object-cover"
-                />
-                {isPending && (
-                    <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-                        <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                    </div>
-                )}
+        <div className="flex flex-col gap-4 w-full max-w-sm mx-auto">
+            {/* Шапка секции */}
+            <div className="flex flex-col gap-1">
+                <Label className="text-sm font-semibold text-foreground">
+                    Изображение товара
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                    JPG, PNG или WebP до 5 МБ
+                </p>
             </div>
 
-            <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                accept="image/png, image/jpeg, image/jpg, image/webp"
-                className="hidden"
-                disabled={isPending}
-            />
+            {/* Зона отображения */}
+            <div className="w-full aspect-square overflow-hidden rounded-xl border bg-muted/20 flex items-center justify-center">
+                <ProductImage
+                    src={imageUrl}
+                    alt={`${productBrand} ${productName}`}
+                    className="h-full w-full object-contain p-2"
+                />
+            </div>
 
-            <div className="flex gap-2">
+            {/* Кнопки строго в одну колонку */}
+            <div className="flex flex-col gap-2 w-full">
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    accept="image/*"
+                    className="hidden"
+                    disabled={isPending}
+                />
+
                 <Button
                     type="button"
                     variant="outline"
-                    size="sm"
-                    className="flex-1 gap-2"
+                    className="w-full justify-center text-sm"
                     disabled={isPending}
                     onClick={() => fileInputRef.current?.click()}
                 >
-                    <Upload className="w-4 h-4" />
-                    {imageUrl ? 'Изменить' : 'Загрузить'}
+                    {isUploading ? (
+                        <Loader2 className="mr-2 h-4 w-4 shrink-0 animate-spin" />
+                    ) : (
+                        <Upload className="mr-2 h-4 w-4 shrink-0" />
+                    )}
+                    Выбрать файл
                 </Button>
 
+                <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full justify-center text-sm"
+                    disabled={isPending}
+                    onClick={pasteFromClipboard}
+                >
+                    {isPasting ? (
+                        <Loader2 className="mr-2 h-4 w-4 shrink-0 animate-spin" />
+                    ) : (
+                        <ClipboardPaste className="mr-2 h-4 w-4 shrink-0" />
+                    )}
+                    Вставить из буфера
+                </Button>
+
+                {/* Кнопка удаления — всегда внизу списка кнопок, если картинка загружена */}
                 {imageUrl && (
                     <Button
                         type="button"
                         variant="destructive"
-                        size="sm"
-                        className="px-3"
+                        className="w-full justify-center text-sm mt-1"
                         disabled={isPending}
                         onClick={handleDelete}
-                        title="Удалить изображение"
                     >
-                        <Trash2 className="w-4 h-4" />
+                        {isDeleting ? (
+                            <Loader2 className="mr-2 h-4 w-4 shrink-0 animate-spin" />
+                        ) : (
+                            <Trash2 className="mr-2 h-4 w-4 shrink-0" />
+                        )}
+                        Удалить изображение
                     </Button>
                 )}
             </div>
