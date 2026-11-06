@@ -74,7 +74,7 @@ export function BulkCategoryAssignSelect({
             disabled: false,
         },
         ...categories.map((cat) => ({
-            label: cat.level === 3 ? `↳ ${cat.path}` : cat.name,
+            label: cat.level === 3 ? `↳ ${cat.name}` : cat.name,
             value: cat.id,
             disabled: cat.disabled,
         })),
