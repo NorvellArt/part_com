@@ -1,19 +1,30 @@
-import { NodeModel } from '@minoru/react-dnd-treeview';
-import { CategoryNode } from '@/entities/category/model/types';
+import { CategoryNode } from "@/entities/category";
+import { NodeModel } from "@minoru/react-dnd-treeview";
 
-export function flattenTree(nodes: CategoryNode[], parentId: string | null = null): NodeModel<CategoryNode>[] {
-    return nodes.reduce((acc, node) => {
-        const item: NodeModel<CategoryNode> = {
+export function flattenTree(
+    categories: CategoryNode[],
+    parentId: string | number = 'root',
+    level = 1
+): NodeModel<CategoryNode>[] {
+    let result: NodeModel<CategoryNode>[] = [];
+
+    categories.forEach((node) => {
+        result.push({
             id: node.id,
-            parent: parentId ?? 'root',
+            parent: parentId,
             text: node.name,
-            droppable: true,
-            data: node
-        };
-        acc.push(item);
+            data: {
+                ...node,
+                level: level
+            },
+        });
+
         if (node.children && node.children.length > 0) {
-            acc.push(...flattenTree(node.children, node.id));
+            result = result.concat(
+                flattenTree(node.children, node.id, level + 1)
+            );
         }
-        return acc;
-    }, [] as NodeModel<CategoryNode>[]);
+    });
+
+    return result;
 }

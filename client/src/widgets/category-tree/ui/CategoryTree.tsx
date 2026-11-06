@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useMemo, useCallback } from 'react';
 import {
     DndProvider,
     Tree,
@@ -20,7 +20,6 @@ import {
     toast,
 } from '@/shared/components';
 
-import { getBranchMaxDepth, getNodeLevel } from '../lib/treeUtils';
 import {
     useCategoryActions,
     useMoveCategory,
@@ -29,99 +28,138 @@ import { CategoryTreeNode } from './CategoryTreeNode';
 import { CategoryFormModal } from '@/features/manage-category/ui/CategoryFormModal';
 import { flattenTree } from '../lib/flattenTree';
 
-const MAX_TREE_DEPTH = 3;
+// 1. СТАБИЛЬНЫЕ СТАТИЧЕСКИЕ КЛАССЫ И СОРТИРОВКА (ВЫНЕСЕНЫ ИЗ КОМПОНЕНТА)
+const TREE_CLASSES = {
+    root: 'space-y-2 p-2 pt-2 pb-4 rounded-xl min-h-[400px] transition-colors duration-200',
+    placeholder: 'relative',
+    dropTarget:
+        'border border-dashed rounded-lg scale-[0.99] bg-[var(--color-brand-light)] border-[var(--color-brand)]',
+    draggingSource: 'opacity-10 pointer-events-none',
+};
+
+const sortTreeNodes = (a: NodeModel<any>, b: NodeModel<any>) =>
+    (a.data?.sortOrder ?? 0) - (b.data?.sortOrder ?? 0);
 
 export function CategoryTree() {
     const { data: tree = [], isLoading, isError, error } = useCategoriesTree();
     const moveCategoryMutation = useMoveCategory();
     const treeRef = useRef<TreeMethods>(null);
-
-    const [localFlatData, setLocalFlatData] = useState<
-        NodeModel<CategoryNode>[]
-    >([]);
-
     const actions = useCategoryActions(treeRef);
 
-    useEffect(() => {
-        setLocalFlatData(tree && tree.length > 0 ? flattenTree(tree) : []);
+    const flatData = useMemo(() => {
+        if (!tree || tree.length === 0) return [];
+        return flattenTree(tree);
     }, [tree]);
 
-    const handleDrop = (
-        _newTree: NodeModel<CategoryNode>[],
-        options: DropOptions<CategoryNode>,
-    ) => {
-        const { dragSourceId, dropTargetId, destinationIndex, dragSource } =
-            options;
-        if (dragSourceId === undefined || !dragSource) return;
+    const handleDrop = useCallback(
+        (
+            newTree: NodeModel<CategoryNode>[],
+            options: DropOptions<CategoryNode>,
+        ) => {
+            const { dragSourceId, dropTargetId, destinationIndex, dragSource } =
+                options;
+            if (dragSourceId === undefined || !dragSource) return;
 
-        const newParentId =
-            dropTargetId === 'root' || dropTargetId === undefined
-                ? null
-                : (dropTargetId as string);
-        const newSortOrder = destinationIndex ?? 0;
-        const oldParentId =
-            dragSource.parent === 'root' ? null : (dragSource.parent as string);
-        const oldSortOrder = (dragSource.data as CategoryNode).sortOrder;
+            const newParentId =
+                dropTargetId === 'root' || dropTargetId === undefined
+                    ? null
+                    : (dropTargetId as string);
+            const newSortOrder = destinationIndex ?? 0;
+            const oldParentId =
+                dragSource.parent === 'root'
+                    ? null
+                    : (dragSource.parent as string);
+            const oldSortOrder = (dragSource.data as CategoryNode).sortOrder;
 
-        if (oldParentId === newParentId && oldSortOrder === newSortOrder)
-            return;
+            if (oldParentId === newParentId && oldSortOrder === newSortOrder)
+                return;
 
-        const updatedTree = [...localFlatData];
-        const dragIndex = updatedTree.findIndex((n) => n.id === dragSourceId);
-        if (dragIndex !== -1) {
-            const [item] = updatedTree.splice(dragIndex, 1);
-            item.parent = dropTargetId;
-            if (item.data) item.data.sortOrder = newSortOrder;
-            updatedTree.splice(newSortOrder, 0, item);
-            setLocalFlatData(updatedTree);
-        }
-
-        moveCategoryMutation.mutate(
-            { id: dragSourceId as string, data: { newParentId, newSortOrder } },
-            {
-                onSuccess: () => {
-                    if (newParentId) treeRef.current?.open(newParentId);
+            moveCategoryMutation.mutate(
+                {
+                    id: dragSourceId as string,
+                    data: { newParentId, newSortOrder },
                 },
-                onError: (err: any) => {
-                    setLocalFlatData(flattenTree(tree));
-                    toast.add({
-                        type: 'error',
-                        title: err.message || 'Ошибка перемещения',
-                        priority: 'high',
-                    });
+                {
+                    onSuccess: () => {
+                        if (newParentId) treeRef.current?.open(newParentId);
+                    },
+                    onError: (err: any) => {
+                        toast.add({
+                            type: 'error',
+                            title: err.message || 'Ошибка перемещения',
+                            priority: 'high',
+                        });
+                    },
                 },
-            },
-        );
-    };
+            );
+        },
+        [moveCategoryMutation],
+    );
 
-    const handleCanDrop = (
-        currentTree: NodeModel<CategoryNode>[],
-        options: DropOptions<CategoryNode>,
-    ) => {
-        const { dragSource, dropTargetId, dropTarget } = options;
+    // СУПЕР-ОПТИМИЗИРОВАННЫЙ КOЛЛБЭК: Работает за O(1) и не вызывает ререндеров useCollector
+    const handleCanDrop = useCallback(
+        (
+            currentTree: NodeModel<CategoryNode>[],
+            options: DropOptions<CategoryNode>,
+        ) => {
+            const { dragSource, dropTargetId, dropTarget } = options;
+            if (!dragSource || dragSource.id === dropTargetId) return false;
 
-        if (!dragSource || dragSource.id === dropTargetId) return false;
+            // Считываем уровень текущего элемента напрямую из сохраненного data
+            const currentDragNodeLevel = (dragSource.data as any)?.level ?? 1;
 
-        const dragNode = dragSource.data as CategoryNode;
-        if (!dragNode) return false;
+            // Определяем уровень, на который элемент встанет в случае успешного дропа
+            let futureExpectedLevel = 1; // Если бросаем в корень ('root')
 
-        const movingBranchHeight = getBranchMaxDepth(dragNode);
+            if (
+                dropTargetId !== 'root' &&
+                dropTargetId !== undefined &&
+                dropTarget
+            ) {
+                // Если мы навели на какую-то другую ноду:
+                // Будущий уровень элемента равен уровню этой ноды + 1 (если закидываем внутрь)
+                const targetNodeLevel = (dropTarget.data as any)?.level ?? 1;
+                futureExpectedLevel = targetNodeLevel + 1;
+            }
 
-        let targetParentLevel = 0;
+            // Разрешаем перемещение только в том случае, если уровень элемента не поменяется
+            return currentDragNodeLevel === futureExpectedLevel;
+        },
+        [],
+    );
 
-        if (dropTargetId !== 'root' && dropTargetId !== undefined) {
-            targetParentLevel = getNodeLevel(localFlatData, dropTargetId);
-        }
+    const renderPlaceholder = useCallback(
+        (node: NodeModel<CategoryNode>, { depth }: { depth: number }) => (
+            <div
+                style={{ marginLeft: depth * 24 }}
+                className="relative py-1 z-30"
+            >
+                <div
+                    style={{ backgroundColor: 'var(--color-brand)' }}
+                    className="h-1 w-full rounded relative shadow-[0_0_8px_rgba(var(--brand),0.6)] before:content-[''] before:absolute before:w-3 before:h-3 before:rounded-full before:-top-1 before:-left-1 before:z-40"
+                />
+            </div>
+        ),
+        [],
+    );
 
-        const futureExpectedLevel = targetParentLevel + 1;
-
-        return futureExpectedLevel + movingBranchHeight - 1 <= MAX_TREE_DEPTH;
-    };
+    const renderNode = useCallback(
+        (node: NodeModel<CategoryNode>, params: any) => (
+            <CategoryTreeNode
+                node={node}
+                params={params}
+                onAddChild={actions.openAddChild}
+                onEdit={actions.openEdit}
+                onDelete={actions.handleDelete}
+            />
+        ),
+        [actions.openAddChild, actions.openEdit, actions.handleDelete],
+    );
 
     if (isLoading) {
         return (
             <div className="flex justify-center p-12 gap-2 text-slate-500">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <Loader2 className="h-6 w-6 animate-spin text-[var(--color-brand)]" />
                 <span className="text-sm font-medium">
                     Загрузка каталога...
                 </span>
@@ -144,10 +182,6 @@ export function CategoryTree() {
         );
     }
 
-    const treeKey = localFlatData
-        .map((node) => `${node.id}-${node.data?.sortOrder}`)
-        .join('|');
-
     return (
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
             <div className="flex justify-between items-center mb-2 border-b border-slate-100 pb-2">
@@ -162,7 +196,7 @@ export function CategoryTree() {
                 </Button>
             </div>
 
-            {localFlatData.length === 0 ? (
+            {flatData.length === 0 ? (
                 <div className="text-center py-12 border border-dashed rounded-lg text-slate-400 bg-slate-50/50">
                     Дерево пусто.
                 </div>
@@ -173,49 +207,18 @@ export function CategoryTree() {
                 >
                     <div className="overflow-x-auto min-h-[300px] relative pt-1">
                         <Tree
-                            key={treeKey}
+                            key="super-stable-tree"
                             ref={treeRef}
-                            tree={localFlatData}
+                            tree={flatData}
                             rootId="root"
                             onDrop={handleDrop}
                             initialOpen={true}
                             dropTargetOffset={10}
-                            sort={(a, b) =>
-                                (a.data?.sortOrder ?? 0) -
-                                (b.data?.sortOrder ?? 0)
-                            }
+                            sort={sortTreeNodes}
                             canDrop={handleCanDrop}
-                            placeholderRender={(node, { depth }) => (
-                                <div
-                                    style={{ marginLeft: depth * 24 }}
-                                    className="relative py-1 z-30"
-                                >
-                                    <div
-                                        style={{
-                                            backgroundColor:
-                                                'var(--color-brand)',
-                                        }}
-                                        className="h-1 w-full rounded relative shadow-[0_0_8px_rgba(var(--brand),0.6)] before:content-[''] before:absolute before:w-3 before:h-3 before:rounded-full before:-top-1 before:-left-1 before:z-40"
-                                    />
-                                </div>
-                            )}
-                            classes={{
-                                root: 'space-y-2 p-2 pt-2 pb-4 rounded-xl min-h-[400px] transition-colors duration-200',
-                                placeholder: 'relative',
-                                dropTarget:
-                                    'border border-dashed rounded-lg scale-[0.99] bg-[var(--color-brand-light)] border-[var(--color-brand)]',
-                                draggingSource:
-                                    'opacity-10 pointer-events-none',
-                            }}
-                            render={(node, params) => (
-                                <CategoryTreeNode
-                                    node={node}
-                                    params={params}
-                                    onAddChild={actions.openAddChild}
-                                    onEdit={actions.openEdit}
-                                    onDelete={actions.handleDelete}
-                                />
-                            )}
+                            placeholderRender={renderPlaceholder}
+                            classes={TREE_CLASSES}
+                            render={renderNode}
                         />
                     </div>
                 </DndProvider>
