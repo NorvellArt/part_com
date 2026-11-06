@@ -52,9 +52,7 @@ export function CategoryTreeNode({
             >
                 <div className="flex items-center gap-2">
                     <div
-                        ref={
-                            params.handleRef as React.RefObject<HTMLDivElement>
-                        }
+                        ref={params.handleRef}
                         className={`p-1 rounded transition-colors cursor-grab active:cursor-grabbing
                             ${params.isDragging ? 'text-blue-600 bg-blue-100' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}
                         `}

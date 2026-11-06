@@ -26,9 +26,9 @@ import {
 } from '@/features/manage-category';
 import { CategoryTreeNode } from './CategoryTreeNode';
 import { CategoryFormModal } from '@/features/manage-category/ui/CategoryFormModal';
-import { flattenTree } from '../lib/flattenTree';
 
-// 1. СТАБИЛЬНЫЕ СТАТИЧЕСКИЕ КЛАССЫ И СОРТИРОВКА (ВЫНЕСЕНЫ ИЗ КОМПОНЕНТА)
+const ROOT_ID = 'root';
+
 const TREE_CLASSES = {
     root: 'space-y-2 p-2 pt-2 pb-4 rounded-xl min-h-[400px] transition-colors duration-200',
     placeholder: 'relative',
@@ -37,56 +37,115 @@ const TREE_CLASSES = {
     draggingSource: 'opacity-10 pointer-events-none',
 };
 
-const sortTreeNodes = (a: NodeModel<any>, b: NodeModel<any>) =>
-    (a.data?.sortOrder ?? 0) - (b.data?.sortOrder ?? 0);
-
 export function CategoryTree() {
     const { data: tree = [], isLoading, isError, error } = useCategoriesTree();
     const moveCategoryMutation = useMoveCategory();
     const treeRef = useRef<TreeMethods>(null);
     const actions = useCategoryActions(treeRef);
 
-    const flatData = useMemo(() => {
-        if (!tree || tree.length === 0) return [];
-        return flattenTree(tree);
+    const flatData = useMemo<NodeModel<CategoryNode>[]>(() => {
+        const result: NodeModel<CategoryNode>[] = [];
+
+        const flatten = (
+            nodes: CategoryNode[],
+            parentId: string | number = ROOT_ID,
+            level = 1,
+        ) => {
+            const sortedNodes = [...nodes].sort(
+                (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
+            );
+
+            sortedNodes.forEach((node, index) => {
+                result.push({
+                    id: node.id,
+                    parent: parentId,
+                    text: node.name,
+                    data: {
+                        ...node,
+                        level,
+                        sortOrder: index,
+                    },
+                });
+
+                if (node.children?.length) {
+                    flatten(node.children, node.id, level + 1);
+                }
+            });
+        };
+
+        flatten(tree);
+
+        return result;
     }, [tree]);
+
+    const handleCanDrop = useCallback(
+        (
+            tree: NodeModel<CategoryNode>[],
+            { dragSource, dropTargetId }: DropOptions<CategoryNode>,
+        ) => {
+            if (!dragSource) {
+                return false;
+            }
+            
+            return dragSource.parent === dropTargetId;
+        },
+        [],
+    );
 
     const handleDrop = useCallback(
         (
             newTree: NodeModel<CategoryNode>[],
             options: DropOptions<CategoryNode>,
         ) => {
-            const { dragSourceId, dropTargetId, destinationIndex, dragSource } =
-                options;
-            if (dragSourceId === undefined || !dragSource) return;
+            const { dragSourceId, dragSource } = options;
 
-            const newParentId =
-                dropTargetId === 'root' || dropTargetId === undefined
-                    ? null
-                    : (dropTargetId as string);
-            const newSortOrder = destinationIndex ?? 0;
-            const oldParentId =
-                dragSource.parent === 'root'
-                    ? null
-                    : (dragSource.parent as string);
-            const oldSortOrder = (dragSource.data as CategoryNode).sortOrder;
-
-            if (oldParentId === newParentId && oldSortOrder === newSortOrder)
+            if (!dragSource || dragSourceId === undefined) {
                 return;
+            }
+
+            const sourceId = dragSourceId as string;
+
+            const newParentId = dragSource.parent;
+
+            const siblings = newTree.filter(
+                (node) => node.parent === newParentId,
+            );
+
+            const newSortOrder = siblings.findIndex(
+                (node) => node.id === dragSourceId,
+            );
+
+            if (newSortOrder === -1) {
+                return;
+            }
+
+            const oldSortOrder = dragSource.data?.sortOrder ?? 0;
+
+            if (oldSortOrder === newSortOrder) {
+                return;
+            }
 
             moveCategoryMutation.mutate(
                 {
-                    id: dragSourceId as string,
-                    data: { newParentId, newSortOrder },
+                    id: sourceId,
+                    data: {
+                        newParentId:
+                            newParentId === ROOT_ID
+                                ? null
+                                : (newParentId as string),
+                        newSortOrder,
+                    },
                 },
                 {
                     onSuccess: () => {
-                        if (newParentId) treeRef.current?.open(newParentId);
+                        if (newParentId !== ROOT_ID) {
+                            treeRef.current?.open(newParentId);
+                        }
                     },
-                    onError: (err: any) => {
+                    onError: (err: Error) => {
                         toast.add({
                             type: 'error',
-                            title: err.message || 'Ошибка перемещения',
+                            title: err.message || 'Ошибка изменения порядка',
                             priority: 'high',
                         });
                     },
@@ -94,38 +153,6 @@ export function CategoryTree() {
             );
         },
         [moveCategoryMutation],
-    );
-
-    // СУПЕР-ОПТИМИЗИРОВАННЫЙ КOЛЛБЭК: Работает за O(1) и не вызывает ререндеров useCollector
-    const handleCanDrop = useCallback(
-        (
-            currentTree: NodeModel<CategoryNode>[],
-            options: DropOptions<CategoryNode>,
-        ) => {
-            const { dragSource, dropTargetId, dropTarget } = options;
-            if (!dragSource || dragSource.id === dropTargetId) return false;
-
-            // Считываем уровень текущего элемента напрямую из сохраненного data
-            const currentDragNodeLevel = (dragSource.data as any)?.level ?? 1;
-
-            // Определяем уровень, на который элемент встанет в случае успешного дропа
-            let futureExpectedLevel = 1; // Если бросаем в корень ('root')
-
-            if (
-                dropTargetId !== 'root' &&
-                dropTargetId !== undefined &&
-                dropTarget
-            ) {
-                // Если мы навели на какую-то другую ноду:
-                // Будущий уровень элемента равен уровню этой ноды + 1 (если закидываем внутрь)
-                const targetNodeLevel = (dropTarget.data as any)?.level ?? 1;
-                futureExpectedLevel = targetNodeLevel + 1;
-            }
-
-            // Разрешаем перемещение только в том случае, если уровень элемента не поменяется
-            return currentDragNodeLevel === futureExpectedLevel;
-        },
-        [],
     );
 
     const renderPlaceholder = useCallback(
@@ -176,7 +203,8 @@ export function CategoryTree() {
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Ошибка загрузки</AlertTitle>
                 <AlertDescription>
-                    {(error as any)?.message || 'Не удалось загрузить данные.'}
+                    {(error as Error)?.message ||
+                        'Не удалось загрузить данные.'}
                 </AlertDescription>
             </Alert>
         );
@@ -188,11 +216,13 @@ export function CategoryTree() {
                 <h2 className="text-lg font-semibold text-slate-900">
                     Структура категорий
                 </h2>
+
                 <Button
                     onClick={actions.openCreateRoot}
                     className="gap-2 shadow-sm text-white transition-colors bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] active:bg-[var(--color-brand-active)]"
                 >
-                    <FolderPlus className="h-4 w-4" /> Корневая категория
+                    <FolderPlus className="h-4 w-4" />
+                    Корневая категория
                 </Button>
             </div>
 
@@ -201,21 +231,18 @@ export function CategoryTree() {
                     Дерево пусто.
                 </div>
             ) : (
-                <DndProvider
-                    backend={HTML5Backend}
-                    debugMode={false}
-                >
+                <DndProvider backend={HTML5Backend}>
                     <div className="overflow-x-auto min-h-[300px] relative pt-1">
                         <Tree
-                            key="super-stable-tree"
                             ref={treeRef}
                             tree={flatData}
-                            rootId="root"
+                            rootId={ROOT_ID}
                             onDrop={handleDrop}
+                            canDrop={handleCanDrop}
+                            sort={false}
+                            insertDroppableFirst={false}
                             initialOpen={true}
                             dropTargetOffset={10}
-                            sort={sortTreeNodes}
-                            canDrop={handleCanDrop}
                             placeholderRender={renderPlaceholder}
                             classes={TREE_CLASSES}
                             render={renderNode}
