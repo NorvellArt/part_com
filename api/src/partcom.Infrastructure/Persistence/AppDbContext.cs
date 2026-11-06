@@ -53,11 +53,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
             entity.HasIndex(e => e.Slug).IsUnique();
 
+            entity.Property(e => e.SortOrder)
+                .IsRequired()
+                .HasDefaultValue(0);
+
             entity.HasOne(e => e.Parent)
-                  .WithMany(e => e.Children)
-                  .HasForeignKey(e => e.ParentId)
-                  .OnDelete(DeleteBehavior.Restrict)
-                  .IsRequired(false);
+                .WithMany(e => e.Children)
+                .HasForeignKey(e => e.ParentId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false);
 
             entity.HasIndex(e => e.ParentId);
         });

@@ -7,6 +7,7 @@ public class CategoryEntity
     public string Slug { get; set; } = string.Empty;
     public Guid? ParentId { get; set; }
     public int Level { get; set; }
+    public int SortOrder { get; set; }
 
     public CategoryEntity? Parent { get; set; }
     public ICollection<CategoryEntity> Children { get; set; } = [];

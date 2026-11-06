@@ -7,6 +7,7 @@ public class Category
     public string Slug { get; private set; } = string.Empty;
     public Guid? ParentId { get; private set; }
     public int Level { get; private set; }
+    public int SortOrder { get; private set; }
 
     public Category? Parent { get; private set; }
 
@@ -18,15 +19,16 @@ public class Category
 
     private Category() { }
 
-    public Category(string name, string slug)
+    public Category(string name, string slug, int sortOrder = 0)
     {
         Id = Guid.NewGuid();
         Update(name, slug);
         ParentId = null;
         Level = 1;
+        SortOrder = sortOrder;
     }
 
-    public Category CreateChild(string name, string slug)
+    public Category CreateChild(string name, string slug, int sortOrder = 0)
     {
         if (Level >= 3)
         {
@@ -40,7 +42,8 @@ public class Category
             Slug = slug.Trim().ToLowerInvariant(),
             ParentId = this.Id,
             Parent = this,
-            Level = this.Level + 1
+            Level = this.Level + 1,
+            SortOrder = sortOrder
         };
 
         _children.Add(child);
@@ -59,13 +62,25 @@ public class Category
         Slug = slug.Trim().ToLowerInvariant();
     }
 
-    public void MoveToParent(Category? newParent)
+    public void UpdateSortOrder(int newSortOrder)
     {
+        if (newSortOrder < 0)
+            throw new ArgumentException("Порядок сортировки не может быть отрицательным.", nameof(newSortOrder));
+
+        SortOrder = newSortOrder;
+    }
+
+    public void MoveToParent(Category? newParent, int newSortOrder = 0)
+    {
+        if (newSortOrder < 0)
+            throw new ArgumentException("Порядок сортировки не может быть отрицательным.", nameof(newSortOrder));
+
         if (newParent == null)
         {
             ParentId = null;
             Parent = null;
             UpdateLevelHierarchy(1);
+            SortOrder = newSortOrder;
             return;
         }
 
@@ -84,10 +99,11 @@ public class Category
 
         ParentId = newParent.Id;
         Parent = newParent;
+        SortOrder = newSortOrder;
         UpdateLevelHierarchy(newLevel);
     }
 
-    public static Category Reconstitute(Guid id, string name, string slug, Guid? parentId, int level)
+    public static Category Reconstitute(Guid id, string name, string slug, Guid? parentId, int level, int sortOrder)
     {
         return new Category
         {
@@ -95,7 +111,8 @@ public class Category
             Name = name,
             Slug = slug,
             ParentId = parentId,
-            Level = level
+            Level = level,
+            SortOrder = sortOrder
         };
     }
 

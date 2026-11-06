@@ -47,7 +47,7 @@ public static class CategoryEndpoints
                 {
                     return Results.NotFound(new { error = result.Error });
                 }
-                
+
                 return Results.BadRequest(new { error = result.Error });
             }
 
@@ -57,17 +57,26 @@ public static class CategoryEndpoints
         .Produces(StatusCodes.Status204NoContent)
         .Produces(StatusCodes.Status404NotFound);
 
-        group.MapPut("/{id:guid}/move", async (Guid id, Guid? newParentId, ICategoryService categoryService, CancellationToken ct) =>
+        group.MapPut("/{id:guid}/move", async (
+            Guid id,
+            MoveCategoryDto dto,
+            ICategoryService categoryService,
+            CancellationToken ct) =>
         {
-            try
+            var result = await categoryService.MoveAsync(id, dto.NewParentId, dto.NewSortOrder, ct);
+
+            if (!result.IsSuccess)
             {
-                var moved = await categoryService.MoveAsync(id, newParentId, ct);
-                return moved ? Results.NoContent() : Results.NotFound();
+                var errorMessage = result.Error ?? "Произошла неизвестная ошибка при перемещении.";
+                if (errorMessage.Contains("не найдена"))
+                {
+                    return Results.NotFound(new { error = errorMessage });
+                }
+
+                return Results.BadRequest(new { error = result.Error });
             }
-            catch (InvalidOperationException ex)
-            {
-                return Results.BadRequest(new { error = ex.Message });
-            }
+
+            return Results.NoContent();
         })
         .WithName("MoveCategory")
         .Produces(StatusCodes.Status204NoContent)
@@ -84,7 +93,7 @@ public static class CategoryEndpoints
                 {
                     return Results.NotFound(new { error = result.Error });
                 }
-                
+
                 return Results.BadRequest(new { error = result.Error });
             }
 

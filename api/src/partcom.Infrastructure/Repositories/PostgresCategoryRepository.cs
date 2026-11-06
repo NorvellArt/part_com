@@ -30,6 +30,7 @@ public class PostgresCategoryRepository(AppDbContext context) : ICategoryReposit
     {
         var entities = await _context.Categories
             .AsNoTracking()
+            .OrderBy(c => c.SortOrder)
             .ToListAsync(cancellationToken);
 
         return [.. entities.Select(MapToDomain)];
@@ -58,6 +59,10 @@ public class PostgresCategoryRepository(AppDbContext context) : ICategoryReposit
         entity.Name = category.Name;
         entity.Slug = category.Slug;
         entity.ParentId = category.ParentId;
+        entity.Level = category.Level;
+        entity.SortOrder = category.SortOrder;
+
+        UpdateChildEntitiesProperties(entity, category);
     }
 
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -71,6 +76,26 @@ public class PostgresCategoryRepository(AppDbContext context) : ICategoryReposit
             .AnyAsync(c => c.ParentId == categoryId, cancellationToken);
     }
 
+    public async Task<List<Category>> GetChildrenByParentIdAsync(Guid? parentId, CancellationToken cancellationToken = default)
+    {
+        var entities = await _context.Categories
+            .Where(c => c.ParentId == parentId)
+            .OrderBy(c => c.SortOrder)
+            .ToListAsync(cancellationToken);
+
+        return [.. entities.Select(MapToDomain)];
+    }
+
+    public async Task<Category?> GetByIdWithSubTreeAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _context.Categories
+            .Include(c => c.Children)
+                .ThenInclude(ch => ch.Children)
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+
+        return entity is null ? null : MapToDomainWithChildren(entity);
+    }
+
     private static Category MapToDomain(CategoryEntity entity)
     {
         return Category.Reconstitute(
@@ -78,7 +103,8 @@ public class PostgresCategoryRepository(AppDbContext context) : ICategoryReposit
             entity.Name,
             entity.Slug,
             entity.ParentId,
-            entity.Level
+            entity.Level,
+            entity.SortOrder
         );
     }
 
@@ -90,7 +116,39 @@ public class PostgresCategoryRepository(AppDbContext context) : ICategoryReposit
             Name = domain.Name,
             Slug = domain.Slug,
             ParentId = domain.ParentId,
-            Level = domain.Level
+            Level = domain.Level,
+            SortOrder = domain.SortOrder
         };
+    }
+
+    private static Category MapToDomainWithChildren(CategoryEntity entity)
+    {
+        var domainCategory = MapToDomain(entity);
+
+        foreach (var childEntity in entity.Children)
+        {
+            var domainChild = MapToDomainWithChildren(childEntity);
+            domainChild.MoveToParent(domainCategory, domainChild.SortOrder);
+        }
+
+        return domainCategory;
+    }
+
+    private void UpdateChildEntitiesProperties(CategoryEntity entity, Category domain)
+    {
+        foreach (var domainChild in domain.Children)
+        {
+            var childEntity = _context.Categories.Local.FirstOrDefault(c => c.Id == domainChild.Id)
+                              ?? entity.Children.FirstOrDefault(c => c.Id == domainChild.Id);
+
+            if (childEntity != null)
+            {
+                childEntity.Level = domainChild.Level;
+                childEntity.SortOrder = domainChild.SortOrder;
+                childEntity.ParentId = domainChild.ParentId;
+
+                UpdateChildEntitiesProperties(childEntity, domainChild);
+            }
+        }
     }
 }

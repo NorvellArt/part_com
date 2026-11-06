@@ -288,7 +288,14 @@ public class PostgresProductRepository(AppDbContext context) : IProductRepositor
     private static Product MapToDomain(ProductEntity entity)
     {
         var domainCategory = entity.Category != null
-        ? Category.Reconstitute(entity.Category.Id, entity.Category.Name, entity.Category.Slug, entity.Category.ParentId, entity.Category.Level)
+        ? Category.Reconstitute(
+            entity.Category.Id,
+            entity.Category.Name,
+            entity.Category.Slug,
+            entity.Category.ParentId,
+            entity.Category.Level,
+            entity.Category.SortOrder
+            )
         : null;
 
         var product = new Product(

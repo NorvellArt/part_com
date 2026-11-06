@@ -4,6 +4,7 @@ import {
     Category,
     CategoryNode,
     CreateCategoryInput,
+    MoveCategoryInput,
     UpdateCategoryInput
 } from '@/entities/category';
 
@@ -37,10 +38,10 @@ export const categoryApi = {
         });
     },
 
-    move: async (id: string, newParentId: string | null) => {
+    move: async (id: string, data: MoveCategoryInput) => {
         return fetchApi<void>(`/api/categories/${id}/move`, {
             method: 'PUT',
-            body: JSON.stringify(newParentId),
+            body: JSON.stringify(data),
         });
     },
 

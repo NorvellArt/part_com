@@ -12,4 +12,6 @@ public interface ICategoryRepository
     Task UpdateAsync(Category category, CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<bool> HasSubCategoriesAsync(Guid categoryId, CancellationToken cancellationToken = default);
+    Task<List<Category>> GetChildrenByParentIdAsync(Guid? parentId, CancellationToken cancellationToken = default);
+    Task<Category?> GetByIdWithSubTreeAsync(Guid id, CancellationToken cancellationToken = default);
 }

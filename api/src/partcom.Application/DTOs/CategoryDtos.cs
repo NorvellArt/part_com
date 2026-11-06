@@ -5,7 +5,8 @@ public record CategoryDto(
     string Name,
     string Slug,
     Guid? ParentId,
-    int Level
+    int Level,
+    int SortOrder
 );
 
 public record CategoryNodeDto(
@@ -13,8 +14,10 @@ public record CategoryNodeDto(
     string Name,
     string Slug,
     int Level,
+    int SortOrder,
     List<CategoryNodeDto> Children
 );
 
 public record CreateCategoryDto(string Name, string Slug, Guid? ParentId);
 public record UpdateCategoryDto(string Name, string Slug);
+public record MoveCategoryDto(Guid? NewParentId, int NewSortOrder);

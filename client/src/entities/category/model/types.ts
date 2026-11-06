@@ -4,6 +4,7 @@ export interface Category {
     slug: string;
     parentId: string | null;
     level: number;
+    sortOrder: number;
 }
 
 export interface CategoryNode {
@@ -11,6 +12,7 @@ export interface CategoryNode {
     name: string;
     slug: string;
     level: number;
+    sortOrder: number;
     children: CategoryNode[];
 }
 
@@ -23,4 +25,9 @@ export interface CreateCategoryInput {
 export interface UpdateCategoryInput {
     name: string;
     slug: string;
+}
+
+export interface MoveCategoryInput {
+    newParentId: string | null;
+    newSortOrder: number;
 }
