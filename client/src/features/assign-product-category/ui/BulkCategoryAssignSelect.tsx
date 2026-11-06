@@ -28,33 +28,56 @@ export function BulkCategoryAssignSelect({
     const queryClient = useQueryClient();
     const { data: tree = [], isLoading: isTreeLoading } = useCategoriesTree();
     const [isSuccess, setIsSuccess] = useState(false);
-    
+
     const [selectedValue, setSelectedValue] = useState<string>('');
 
-    const getLeafCategories = (
-        nodes: CategoryNode[],
-    ): { id: string; name: string }[] => {
-        const leaves: { id: string; name: string }[] = [];
-        const traverse = (node: CategoryNode) => {
-            if (node.level === 3) {
-                leaves.push({ id: node.id, name: node.name });
-            }
-            if (node.children && node.children.length > 0) {
-                node.children.forEach(traverse);
-            }
+    const getCategoriesWithHierarchy = (nodes: CategoryNode[]) => {
+        const result: {
+            id: string;
+            name: string;
+            level: number;
+            disabled: boolean;
+            path: string;
+        }[] = [];
+
+        const traverse = (
+            node: CategoryNode,
+            parents: string[] = [],
+            currentLevel = 1,
+        ) => {
+            const currentPath = [...parents, node.name];
+
+            result.push({
+                id: node.id,
+                name: node.name,
+                level: currentLevel,
+                disabled: currentLevel !== 3,
+                path: currentPath.join(' / '),
+            });
+
+            node.children?.forEach((child) => {
+                traverse(child, currentPath, currentLevel + 1);
+            });
         };
-        nodes.forEach(traverse);
-        return leaves.sort((a, b) => a.name.localeCompare(b.name));
+
+        nodes.forEach((node) => traverse(node));
+
+        return result;
     };
 
-    const leafCategories = getLeafCategories(tree);
+    const categories = getCategoriesWithHierarchy(tree);
 
     const selectItems = [
-        { label: "-- Сбросить категорию --", value: "none" },
-        ...leafCategories.map(cat => ({
-            label: cat.name,
-            value: cat.id
-        }))
+        {
+            label: '-- Сбросить категорию --',
+            value: 'none',
+            disabled: false,
+        },
+        ...categories.map((cat) => ({
+            label: cat.level === 3 ? `↳ ${cat.path}` : cat.name,
+            value: cat.id,
+            disabled: cat.disabled,
+        })),
     ];
 
     const bulkAssignMutation = useMutation({
@@ -92,8 +115,8 @@ export function BulkCategoryAssignSelect({
 
     return (
         <div className="flex items-center gap-2">
-            <Select 
-                value={selectedValue} 
+            <Select
+                value={selectedValue}
                 onValueChange={handleValueChange}
                 items={selectItems}
                 disabled={bulkAssignMutation.isPending || isTreeLoading}
@@ -104,10 +127,17 @@ export function BulkCategoryAssignSelect({
                 <SelectContent className="rounded-xl max-h-[300px]">
                     <SelectGroup>
                         {selectItems.map((item) => (
-                            <SelectItem 
-                                key={item.value} 
+                            <SelectItem
+                                key={item.value}
                                 value={item.value}
-                                className={`text-xs ${item.value === 'none' ? 'text-red-500 font-medium' : ''}`}
+                                disabled={item.disabled}
+                                className={`text-xs ${
+                                    item.value === 'none'
+                                        ? 'text-red-500 font-medium'
+                                        : item.disabled
+                                          ? 'font-semibold text-slate-400 bg-slate-50'
+                                          : 'text-slate-700'
+                                }`}
                             >
                                 {item.label}
                             </SelectItem>
