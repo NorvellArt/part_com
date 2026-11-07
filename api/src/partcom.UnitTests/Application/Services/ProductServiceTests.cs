@@ -1,3 +1,4 @@
+using partcom.Application.Common;
 using Moq;
 using partcom.Application.DTOs;
 using partcom.Application.Interfaces;
@@ -21,7 +22,9 @@ public class ProductServiceTests
 
         _service = new ProductService(
             _productRepositoryMock.Object,
-            _excelParserMock.Object);
+            Mock.Of<ICategoryRepository>(),
+            _excelParserMock.Object,
+            Mock.Of<IFileStorageService>());
     }
 
     #region GetByIdAsync Tests
@@ -30,7 +33,7 @@ public class ProductServiceTests
     public async Task GetByIdAsync_WhenProductExists_ShouldReturnProductDto()
     {
         var productId = Guid.NewGuid();
-        var product = new Product(productId, "Bosch", "0242236565", "Свеча зажигания", 450m, 10);
+        var product = new Product(productId, "Bosch", "0242236565", "Display number", "Свеча зажигания", 450m, 10, false);
 
         _productRepositoryMock
             .Setup(r => r.GetByIdAsync(productId, It.IsAny<CancellationToken>()))
@@ -65,7 +68,7 @@ public class ProductServiceTests
     [Fact]
     public async Task CreateAsync_WithValidDto_ShouldAddProductAndSaveChanges()
     {
-        var product = new CreateProductDto("Bosch", "0242236565", "Свеча зажигания", 450m, 10, "");
+        var product = new CreateProductDto("Bosch", "0242236565", "Display number", "Свеча зажигания", 450m, 10, "");
 
         var result = await _service.CreateAsync(product);
 
@@ -85,8 +88,8 @@ public class ProductServiceTests
     public async Task UpdateAsync_WhenProductExists_ShouldUpdateAndReturnTrue()
     {
         var productId = Guid.NewGuid();
-        var existingProduct = new Product(productId, "Bosch", "0242236565", "Старое имя", 400m, 5);
-        var updateDto = new UpdateProductDto("Bosch", "0242236565", "Новое имя", 500m, 15, "");
+        var existingProduct = new Product(productId, "Bosch", "0242236565", "Display number", "Старое имя", 400m, 5, false);
+        var updateDto = new UpdateProductDto("Bosch", "0242236565", "Display number", "Новое имя", 500m, 15, "", true);
 
         _productRepositoryMock
             .Setup(r => r.GetByIdAsync(productId, It.IsAny<CancellationToken>()))
@@ -97,6 +100,8 @@ public class ProductServiceTests
         Assert.True(result);
         Assert.Equal("Новое имя", existingProduct.Name);
         Assert.Equal(500m, existingProduct.Price);
+        Assert.True(existingProduct.IsPublished);
+        _productRepositoryMock.Verify(r => r.UpdateAsync(existingProduct, It.IsAny<CancellationToken>()), Times.Once);
 
         _productRepositoryMock.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -105,7 +110,7 @@ public class ProductServiceTests
     public async Task UpdateAsync_WhenProductDoesNotExist_ShouldReturnFalse()
     {
         var productId = Guid.NewGuid();
-        var updateDto = new UpdateProductDto("Bosch", "0242236565", "Новое имя", 500m, 15, "");
+        var updateDto = new UpdateProductDto("Bosch", "0242236565", "Display number", "Новое имя", 500m, 15, "", true);
 
         _productRepositoryMock
             .Setup(r => r.GetByIdAsync(productId, It.IsAny<CancellationToken>()))
@@ -128,24 +133,29 @@ public class ProductServiceTests
 
         var parsedProducts = new List<Product>
         {
-            new("Bosch", "0242236565", "Свеча 1", 450m, 10),
-            new("NGK", "6629", "Свеча 2", 300m, 5)
+            new("Bosch", "0242236565", "Display number", "Свеча 1", 450m, 10),
+            new("NGK", "6629", "Display number", "Свеча 2", 300m, 5)
         };
 
         _excelParserMock
-            .Setup(p => p.ParseProductsAsync(stream, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(parsedProducts);
+            .Setup(p => p.ParseProductsAsync(stream, It.IsAny<ExcelImportSettings>(), It.IsAny<CancellationToken>()))
+            .Returns(Result<IReadOnlyList<Product>>.Success(parsedProducts));
 
-        var existingInDb = new Dictionary<string, Product>(StringComparer.OrdinalIgnoreCase)
+        var existingInDb = new List<Product>
         {
-            ["0242236565"] = new Product("Bosch", "0242236565", "Старое имя", 400m, 2)
+            new("Bosch", "0242236565", "Original display", "Старое имя", 400m, 2)
         };
 
         _productRepositoryMock
-            .Setup(r => r.GetByItemNumbersAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetByCompositeKeysAsync(It.IsAny<List<ProductCompositeKey>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(existingInDb);
 
-        var (insertedCount, updatedCount) = await _service.ImportFromExcelAsync(stream);
+        var result = await _service.ImportFromExcelAsync(stream, new ExcelImportSettings());
+
+        Assert.True(result.IsSuccess);
+        var (insertedCount, updatedCount) = result.Value;
+        Assert.Equal("Original display", existingInDb[0].DisplayItemNumber);
+        Assert.Equal(450m, existingInDb[0].Price);
 
         Assert.Equal(1, insertedCount);
         Assert.Equal(1, updatedCount);
@@ -156,9 +166,14 @@ public class ProductServiceTests
     }
 
     [Fact]
-    public async Task ImportFromExcelAsync_WhenStreamIsNull_ShouldThrowArgumentException()
+    public async Task ImportFromExcelAsync_WhenStreamIsNull_ShouldReturnFailure()
     {
-        await Assert.ThrowsAsync<ArgumentException>(() => _service.ImportFromExcelAsync(null!));
+        var result = await _service.ImportFromExcelAsync(null!, new ExcelImportSettings());
+
+        Assert.False(result.IsSuccess);
+        Assert.NotEmpty(result.Error!);
+        _excelParserMock.VerifyNoOtherCalls();
+        _productRepositoryMock.VerifyNoOtherCalls();
     }
 
     #endregion
@@ -169,7 +184,7 @@ public class ProductServiceTests
     public async Task DeleteAsync_WhenProductExists_ShouldDeleteAndReturnTrue()
     {
         var productId = Guid.NewGuid();
-        var existingProduct = new Product(productId, "Bosch", "0242236565", "Свеча зажигания", 450m, 10);
+        var existingProduct = new Product(productId, "Bosch", "0242236565", "Display number", "Свеча зажигания", 450m, 10, false);
 
         _productRepositoryMock
             .Setup(r => r.GetByIdAsync(productId, It.IsAny<CancellationToken>()))
@@ -209,24 +224,24 @@ public class ProductServiceTests
 
         var items = new List<Product>
         {
-            new(Guid.NewGuid(), "Bosch", "0242236565", "Свеча 1", 450m, 10),
-            new(Guid.NewGuid(), "Bosch", "0242236566", "Свеча 2", 500m, 5)
+            new(Guid.NewGuid(), "Bosch", "0242236565", "Display number", "Свеча 1", 450m, 10, false),
+            new(Guid.NewGuid(), "Bosch", "0242236566", "Display number", "Свеча 2", 500m, 5, false)
         };
 
         var pagedProducts = new PagedResult<Product>(items, 2, page, pageSize);
 
         _productRepositoryMock
-            .Setup(r => r.SearchAsync(query, page, pageSize, It.IsAny<CancellationToken>()))
+            .Setup(r => r.SearchAsync(query, null, page, pageSize, null, PublicationFilter.OnlyPublished, It.IsAny<CancellationToken>()))
             .ReturnsAsync(pagedProducts);
 
-        var result = await _service.SearchAsync(query, page, pageSize);
+        var result = await _service.SearchAsync(query, null, page, pageSize);
 
         Assert.NotNull(result);
         Assert.Equal(2, result.TotalCount);
         Assert.Equal(2, result.Items.Count);
         Assert.Equal("Bosch", result.Items[0].Brand);
 
-        _productRepositoryMock.Verify(r => r.SearchAsync(query, page, pageSize, It.IsAny<CancellationToken>()), Times.Once);
+        _productRepositoryMock.Verify(r => r.SearchAsync(query, null, page, pageSize, null, PublicationFilter.OnlyPublished, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -239,13 +254,13 @@ public class ProductServiceTests
         var emptyPagedResult = new PagedResult<Product>([], 0, 1, 20);
 
         _productRepositoryMock
-            .Setup(r => r.SearchAsync(query, 1, 20, It.IsAny<CancellationToken>()))
+            .Setup(r => r.SearchAsync(query, null, 1, 20, null, PublicationFilter.OnlyPublished, It.IsAny<CancellationToken>()))
             .ReturnsAsync(emptyPagedResult);
 
-        var result = await _service.SearchAsync(query, invalidPage, invalidPageSize);
+        var result = await _service.SearchAsync(query, null, invalidPage, invalidPageSize);
 
         Assert.NotNull(result);
-        _productRepositoryMock.Verify(r => r.SearchAsync(query, 1, 20, It.IsAny<CancellationToken>()), Times.Once);
+        _productRepositoryMock.Verify(r => r.SearchAsync(query, null, 1, 20, null, PublicationFilter.OnlyPublished, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -255,10 +270,10 @@ public class ProductServiceTests
         var emptyPagedResult = new PagedResult<Product>([], 0, 1, 20);
 
         _productRepositoryMock
-            .Setup(r => r.SearchAsync(query, 1, 20, It.IsAny<CancellationToken>()))
+            .Setup(r => r.SearchAsync(query, null, 1, 20, null, PublicationFilter.OnlyPublished, It.IsAny<CancellationToken>()))
             .ReturnsAsync(emptyPagedResult);
 
-        var result = await _service.SearchAsync(query);
+        var result = await _service.SearchAsync(query, null);
 
         Assert.NotNull(result);
         Assert.Empty(result.Items);
@@ -266,4 +281,71 @@ public class ProductServiceTests
     }
 
     #endregion
+
+    [Fact]
+    public async Task ImportFromExcelAsync_WhenParserFails_ShouldReturnErrorWithoutSaving()
+    {
+        using var stream = new MemoryStream([1]);
+        var settings = new ExcelImportSettings();
+        _excelParserMock.Setup(p => p.ParseProductsAsync(stream, settings, It.IsAny<CancellationToken>()))
+            .Returns(Result<IReadOnlyList<Product>>.Failure("Некорректные заголовки"));
+
+        var result = await _service.ImportFromExcelAsync(stream, settings);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal("Некорректные заголовки", result.Error);
+        _productRepositoryMock.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task ImportFromExcelAsync_WithEmptyStream_ShouldReturnFailure()
+    {
+        using var stream = new MemoryStream();
+        var result = await _service.ImportFromExcelAsync(stream, new ExcelImportSettings());
+        Assert.False(result.IsSuccess);
+        _excelParserMock.VerifyNoOtherCalls();
+        _productRepositoryMock.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task ImportFromExcelAsync_WithDisabledColumns_ShouldPreserveExistingValues()
+    {
+        using var stream = new MemoryStream([1]);
+        var settings = new ExcelImportSettings
+        {
+            DisabledColumnsForUpdate = ["НАИМЕНОВАНИЕ", "ЦЕНА", "НАЛИЧИЕ"]
+        };
+        var existing = new Product("Bosch", "123", "1-23", "Оригинал", 100m, 1);
+        var parsed = new Product("BOSCH", "123", "123", "Замена", 200m, 2);
+        _excelParserMock.Setup(p => p.ParseProductsAsync(stream, settings, It.IsAny<CancellationToken>()))
+            .Returns(Result<IReadOnlyList<Product>>.Success([parsed]));
+        _productRepositoryMock.Setup(r => r.GetByCompositeKeysAsync(It.IsAny<List<ProductCompositeKey>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([existing]);
+
+        var result = await _service.ImportFromExcelAsync(stream, settings);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal((0, 1), result.Value);
+        Assert.Equal("Оригинал", existing.Name);
+        Assert.Equal(100m, existing.Price);
+        Assert.Equal(1, existing.Quantity);
+        Assert.Equal("1-23", existing.DisplayItemNumber);
+        _productRepositoryMock.Verify(r => r.AddRangeAsync(It.IsAny<IEnumerable<Product>>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SearchAsync_ShouldCapPageSizeAndForwardFiltersAndCancellation()
+    {
+        using var cancellation = new CancellationTokenSource();
+        var token = cancellation.Token;
+        _productRepositoryMock.Setup(r => r.SearchAsync(null, "plugs", 2, 100, true, PublicationFilter.All, token))
+            .ReturnsAsync(new PagedResult<Product>([], 125, 2, 100));
+
+        var result = await _service.SearchAsync(null, "plugs", 2, 101, true, PublicationFilter.All, token);
+
+        Assert.Equal(125, result.TotalCount);
+        Assert.Equal(2, result.Page);
+        Assert.Equal(100, result.PageSize);
+        _productRepositoryMock.Verify(r => r.SearchAsync(null, "plugs", 2, 100, true, PublicationFilter.All, token), Times.Once);
+    }
 }
